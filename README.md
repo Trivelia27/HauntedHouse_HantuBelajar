@@ -36,5 +36,3 @@ Alur integrasi: Player Performance -> DDA -> parameter PCG & Game AI -> perubaha
 ## Kredit aset
 - Model hantu: Kenney Graveyard Kit "character-ghost" (CC0).
 - Stealth Game: Haunted House (Unity Technologies), Unnerving Ambient Sounds (DHSFX), Horror Music - Free Starter Kit (Fictium Sound Design) dari Unity Asset Store.
-
-Naskah video progress: `Naskah/NASKAH_VIDEO_PROGRESS.pdf`.

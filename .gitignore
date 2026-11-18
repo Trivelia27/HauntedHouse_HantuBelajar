@@ -1,0 +1,38 @@
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vs/
+.vscode/
+.idea/
+*.apk
+*.unitypackage
+
+# hasil uji / rekaman lokal
+/TestOutput/
+
+# Paket Asset Store (lisensi Asset Store EULA - import sendiri dari My Assets)
+/Assets/_3DStealthGame/
+/Assets/_3DStealthGame.meta
+/Assets/Horror_Music_Free_Starter_Kit/
+/Assets/Horror_Music_Free_Starter_Kit.meta
+/Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/
+/Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack.meta
+/Assets/HantuBelajar/Editor/StoreDownloader.cs
+/Assets/HantuBelajar/Editor/StoreDownloader.cs.meta
+*.slnx

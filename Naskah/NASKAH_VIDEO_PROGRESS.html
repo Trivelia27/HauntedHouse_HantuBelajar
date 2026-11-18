@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Naskah Video Progress EAS - Haunted House</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm; }
+  body { font-family: "Segoe UI", Arial, sans-serif; font-size: 10.5pt; color: #1b1b1b; line-height: 1.45; }
+  h1 { font-size: 19pt; margin: 0 0 2px; color: #3a0d0d; }
+  .sub { color: #555; margin-bottom: 10px; }
+  h2 { font-size: 12.5pt; margin: 16px 0 6px; padding: 4px 8px; background: #2b2b2b; color: #fff; border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 4px 0 8px; }
+  td, th { border: 1px solid #bbb; padding: 5px 7px; vertical-align: top; }
+  th { background: #eee; text-align: left; }
+  td.scr { width: 34%; background: #f6f3ee; font-size: 9.5pt; }
+  .say { font-style: normal; }
+  .key { font-family: Consolas, monospace; background: #eee; border: 1px solid #ccc; border-radius: 3px; padding: 0 4px; font-size: 9pt; }
+  .flow { text-align: center; font-weight: 600; background: #fff7e6; border: 1px solid #e0c080; padding: 8px; border-radius: 4px; }
+  .note { background: #eef5ff; border-left: 4px solid #4a7fd0; padding: 6px 10px; margin: 8px 0; font-size: 9.5pt; }
+  .dur { float: right; font-weight: 400; font-size: 9.5pt; color: #ccc; }
+  ul { margin: 4px 0 4px 18px; padding: 0; }
+</style>
+</head>
+<body>
+<h1>Naskah Video Progress Project EAS</h1>
+<div class="sub"><b>Haunted House: Hantu yang Mempelajari Ketakutanmu</b> &mdash; 3D First-Person Survival Horror (Unity) dengan PCG, DDA, dan Game AI<br>
+Perkiraan durasi: 6&ndash;7 menit &bull; Kolom kiri = yang ditampilkan di layar, kolom kanan = yang diucapkan.</div>
+
+<div class="note"><b>Persiapan rekam:</b> buka proyek <i>HauntedHouse_HantuBelajar</i> di Unity, buka scene <i>Assets/Scenes/HauntedHouse.unity</i>, tekan Play, rekam layar (OBS / Xbox Game Bar <span class="key">Win+Alt+R</span>). Panel debug (<span class="key">Tab</span>) dan peta (<span class="key">M</span>) aktif sejak awal. Tombol demo: <span class="key">G</span> rumah baru, <span class="key">F2</span>/<span class="key">F3</span> DDA turun/naik, <span class="key">F5</span> bekukan hantu, <span class="key">F6</span> panggil hantu, <span class="key">F9</span> reset memori hantu.</div>
+
+<h2>1. Pembukaan &amp; Konsep Game <span class="dur">&plusmn; 50 detik</span></h2>
+<table><tr><th>Layar</th><th>Narasi</th></tr>
+<tr><td class="scr">Layar judul game (sebelum klik). Tampak judul dan daftar kontrol.</td>
+<td class="say">"Halo, kami dari kelompok ... . Kami akan mempresentasikan progress Project EAS kami yang berjudul <b>Haunted House: Hantu yang Mempelajari Ketakutanmu</b>. Genrenya 3D first-person survival horror yang dibuat di Unity, dengan tiga komponen utama: Procedural Content Generation, Dynamic Difficulty Adjustment, dan Game AI."</td></tr>
+<tr><td class="scr">Klik untuk mulai. Jalan sebentar, nyalakan/matikan senter (<span class="key">F</span>), jongkok (<span class="key">C</span>), lari (<span class="key">Shift</span>).</td>
+<td class="say">"Pemain terjebak di dalam rumah berhantu dan harus mengumpulkan sejumlah relik untuk membuka pintu keluar. Pemain bisa berjalan, berlari dengan stamina terbatas, berjongkok supaya langkahnya lebih pelan, memakai senter dengan baterai terbatas, dan bersembunyi di lemari atau di kolong ranjang. Keunikannya, hantu di game ini <b>mempelajari kebiasaan pemain</b>, yaitu tempat sembunyi favorit dan jalur yang sering dilewati, dan tingkat kesulitan menyesuaikan performa pemain secara dinamis."</td></tr>
+</table>
+
+<h2>2. Progress Implementasi <span class="dur">&plusmn; 50 detik</span></h2>
+<table><tr><th>Layar</th><th>Narasi</th></tr>
+<tr><td class="scr">Ambil 1 relik (<span class="key">E</span>), tunjukkan toast "Relik didapat 1/3". Ambil baterai. Dekati pintu keluar terkunci.</td>
+<td class="say">"Fitur yang sudah berjalan: kontrol first-person lengkap, senter dengan baterai yang berkurang dan bisa diisi dengan mengambil baterai, sistem interaksi, pengambilan relik, pintu keluar yang baru bisa dibuka setelah semua relik terkumpul, serta kondisi menang dan kalah."</td></tr>
+<tr><td class="scr">Tunjuk HUD: jumlah relik, bar senter &amp; stamina, status hantu di atas, panel debug kiri, peta kanan atas.</td>
+<td class="say">"Di HUD terlihat jumlah relik, baterai senter, stamina, dan status hantu. Untuk keperluan demo kami juga membuat panel debug di kiri yang menampilkan data PCG, DDA, dan AI secara langsung, serta peta di kanan atas. Untuk aset, kami memakai paket <i>Stealth Game Haunted House</i>, model hantu dari Kenney Graveyard Kit, serta paket suara <i>Unnerving Ambient Sounds</i> dan <i>Horror Music Free Starter Kit</i>."</td></tr>
+</table>
+
+<h2>3. Procedural Content Generation (PCG) <span class="dur">&plusmn; 1 menit 20 detik</span></h2>
+<table><tr><th>Layar</th><th>Narasi</th></tr>
+<tr><td class="scr">Fokus ke bagian <b>PCG</b> di panel kiri dan peta. Tekan <span class="key">G</span> 2&ndash;3 kali: denah, seed, jumlah ruang berubah.</td>
+<td class="say">"Seluruh denah rumah dibuat secara prosedural setiap permainan. Saat saya tekan G, rumah baru dibuat dengan seed berbeda, sehingga tata letak ruangan, pintu, relik, tempat sembunyi, baterai, dan perabot selalu berubah."</td></tr>
+<tr><td class="scr">Tunjuk baris: seed, ukuran, ruang, pintu (loop), validasi LOLOS, percobaan, hash.</td>
+<td class="say">"Algoritmanya: pertama, <b>Binary Space Partitioning</b> membagi denah grid menjadi ruangan-ruangan. Kedua, kami membuat graf ketetanggaan antar-ruang lalu memilih pintu dengan <b>spanning tree Kruskal</b> sehingga semua ruang pasti terhubung, ditambah pintu loop dengan peluang tertentu supaya ada jalur alternatif untuk kabur. Ketiga, ruang awal dan pintu keluar ditentukan dari kedalaman BFS sehingga pintu keluar berada jauh dari titik awal. Relik ditempatkan di ruang-ruang yang dalam, sedangkan lemari, ranjang, dan perabot ditempatkan menempel dinding dengan pendekatan <b>generate-and-test</b>: setiap objek yang membuat ada area tidak terjangkau langsung ditolak. Terakhir ada validasi BFS; kalau gagal, generator mengulang dengan seed turunan."</td></tr>
+<tr><td class="scr">Tunjuk baris "-&gt; PCG berikut" di bagian DDA.</td>
+<td class="say">"Parameter utama PCG adalah seed, ukuran rumah, ukuran ruang minimum dan maksimum, peluang loop, jumlah relik, jumlah tempat sembunyi, jumlah baterai, dan kepadatan perabot. Sebagian parameter ini nantinya diatur oleh DDA."</td></tr>
+</table>
+
+<h2>4. Game AI &ndash; Hantu yang Belajar <span class="dur">&plusmn; 1 menit 40 detik</span></h2>
+<table><tr><th>Layar</th><th>Narasi</th></tr>
+<tr><td class="scr">Tunjuk bagian <b>GAME AI</b>: state + "keputusan". Hantu sedang PATROLI (mata biru).</td>
+<td class="say">"NPC utama adalah hantu. Decision making-nya memakai <b>Finite State Machine</b> dengan state Patroli, Hadang, Selidiki, Kejar, Cari, dan Periksa. Warna mata hantu menunjukkan state-nya: biru patroli, oranye curiga atau mencari, ungu menghadang, merah mengejar. Pergerakannya memakai pathfinding A* pada grid hasil PCG."</td></tr>
+<tr><td class="scr">Lari dengan <span class="key">Shift</span> dekat hantu (atau tekan <span class="key">F6</span>). State berubah ke SELIDIKI lalu KEJAR, vignette merah.</td>
+<td class="say">"Hantu punya dua indra. Penglihatan berupa kerucut pandang dengan jarak dan sudut tertentu, dicek dengan raycast supaya tidak tembus dinding; senter yang menyala membuat pemain lebih mudah terlihat, berjongkok membuat lebih sulit terlihat. Pendengaran: setiap langkah kaki menghasilkan suara, lari paling keras, jongkok paling pelan. Kalau hantu mendengar, state berubah ke Selidiki; kalau melihat, langsung Kejar."</td></tr>
+<tr><td class="scr">Kabur dan masuk lemari (<span class="key">E</span>). Lihat feed kanan bawah: "Hantu mencatat ...". Hantu masuk state CARI lalu PERIKSA.</td>
+<td class="say">"Setelah kehilangan jejak, hantu masuk state Cari dan memeriksa tempat sembunyi di sekitar posisi terakhir pemain. Di sinilah bagian <b>belajar</b>: setiap kali pemain bersembunyi, hantu mencatat tempat dan jenisnya, misalnya lemari atau kolong ranjang, beserta tipe ruangannya. Urutan tempat yang diperiksa dan peluang hantu menemukan pemain dihitung dari skor belajar ini."</td></tr>
+<tr><td class="scr">Ulangi sembunyi di lemari yang sama 2&ndash;3 kali; tunjuk panel: skor tempat dan "peluang ketahuan" naik. Buka peta: titik tempat sembunyi berubah ungu, jejak panas merah di jalur yang sering dilewati.</td>
+<td class="say">"Terlihat, semakin sering kami bersembunyi di lemari yang sama, skornya naik dan peluang ketahuan juga naik. Hantu juga mencatat <b>heatmap</b> jalur pemain, terlihat sebagai warna merah di peta. Saat patroli, hantu kadang memilih state <b>Hadang</b>, yaitu menunggu di sel yang paling sering kami lewati. Memori jenis tempat sembunyi disimpan lintas rumah, jadi di rumah berikutnya hantu tetap ingat kebiasaan pemain."</td></tr>
+</table>
+
+<h2>5. Dynamic Difficulty Adjustment (DDA) <span class="dur">&plusmn; 1 menit 10 detik</span></h2>
+<table><tr><th>Layar</th><th>Narasi</th></tr>
+<tr><td class="scr">Fokus ke bagian <b>DDA</b>: d, P, indikator, log evaluasi tiap 8 detik.</td>
+<td class="say">"DDA mengevaluasi performa pemain setiap 8 detik. Indikatornya ada empat: <b>tempo</b> yaitu seberapa cepat pemain menemukan relik, <b>keamanan</b> yaitu proporsi waktu dikejar hantu, <b>sumber daya</b> yaitu sisa baterai, dan <b>ketenangan</b> yaitu seberapa lama pemain bersembunyi, ditambah penalti nyaris tertangkap. Indikator digabung menjadi skor performa P antara 0 dan 1. Kesulitan d disesuaikan dengan rumus d = d + (P - 0,5) x 0,12. Selain itu ada event: tertangkap menurunkan d 0,15, mengambil relik menaikkan 0,04, dan lolos menaikkan 0,10."</td></tr>
+<tr><td class="scr">Tekan <span class="key">F3</span> dua kali lalu <span class="key">F2</span>: nilai kecepatan, jarak pandang, pendengaran berubah; label MUDAH/SEDANG/SULIT.</td>
+<td class="say">"Untuk demonstrasi, saya ubah kesulitan secara manual. Perhatikan parameter AI langsung berubah: kecepatan patroli dan kejar, jarak dan sudut pandang, kepekaan pendengaran, lama mencari, bobot belajar, dan peluang memeriksa tempat sembunyi. Pemain juga terpengaruh lewat kecepatan habisnya baterai."</td></tr>
+<tr><td class="scr">Biarkan tertangkap. Layar TERTANGKAP menampilkan DDA turun. Tekan <span class="key">R</span>: rumah baru, cek panel PCG (tempat sembunyi &amp; baterai bertambah).</td>
+<td class="say">"Ketika pemain tertangkap, DDA menurunkan kesulitan, dan rumah berikutnya dibuat lebih ramah: lebih kecil, tempat sembunyi dan baterai lebih banyak, loop lebih banyak. Sebaliknya jika pemain lolos, rumah berikutnya lebih besar, tempat sembunyi dan baterai lebih sedikit, dan relik bisa bertambah menjadi empat."</td></tr>
+</table>
+
+<h2>6. Integrasi Sistem <span class="dur">&plusmn; 40 detik</span></h2>
+<div class="flow">Player Performance (tempo, dikejar, baterai, sembunyi, tertangkap)<br>&darr;<br>Dynamic Difficulty Adjustment (skor P &rarr; kesulitan d)<br>&darr;<br>Parameter PCG (ukuran, tempat sembunyi, baterai, relik, loop) &nbsp;+&nbsp; Parameter Game AI (kecepatan, pandang, dengar, cari, belajar)<br>&darr;<br>Perubahan Gameplay (rumah berikutnya &amp; perilaku hantu saat ini)</div>
+<table><tr><th>Layar</th><th>Narasi</th></tr>
+<tr><td class="scr">Panel debug penuh terlihat: PCG di atas, DDA di tengah, AI di bawah.</td>
+<td class="say">"Ketiga komponen sudah mulai terhubung. Data perilaku pemain dikumpulkan saat bermain; DDA mengubahnya menjadi tingkat kesulitan; tingkat kesulitan itu langsung mengubah parameter AI hantu dan parameter PCG untuk rumah berikutnya. Selain itu, AI hantu juga memakai data perilaku pemain secara langsung lewat memori belajarnya, sehingga ada dua jalur adaptasi: jangka pendek lewat DDA, dan jangka panjang lewat pembelajaran hantu."</td></tr>
+</table>
+
+<h2>7. Progress Berikutnya <span class="dur">&plusmn; 40 detik</span></h2>
+<table><tr><th>Layar</th><th>Narasi</th></tr>
+<tr><td class="scr">Jalan-jalan di rumah / tampilkan peta. Boleh tutup dengan layar judul.</td>
+<td class="say">"Yang belum selesai dan akan kami kerjakan sampai EAS final:
+<ul>
+<li>penyempurnaan visual memakai lebih banyak aset modular Haunted House (dinding, lantai, pintu) dan animasi hantu;</li>
+<li>model pembelajaran hantu yang lebih kuat, misalnya probabilistik per tempat dengan eksplorasi agar hantu tidak terlalu mudah ditebak;</li>
+<li>kalibrasi bobot DDA dari data playtest dan eksperimen perbandingan dengan dan tanpa DDA;</li>
+<li>parameter PCG yang lebih kaya: lantai bertingkat, ruang terkunci, dan penempatan relik berdasarkan jarak dari tempat sembunyi;</li>
+<li>menu utama, pengaturan, tutorial singkat, dan build Windows.</li>
+</ul>
+Sekian progress dari kelompok kami, terima kasih."</td></tr>
+</table>
+
+<div class="note"><b>Tips rekam cepat:</b> rekam per bagian lalu gabungkan; tidak perlu editing rumit. Jika hantu terlalu cepat menangkap saat menjelaskan, tekan <span class="key">F5</span> untuk membekukan hantu, lalu <span class="key">F5</span> lagi untuk melanjutkan. Tekan <span class="key">F9</span> sebelum merekam bagian Game AI agar memori hantu mulai dari nol.</div>
+</body>
+</html>

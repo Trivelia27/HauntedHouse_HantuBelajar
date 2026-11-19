@@ -9,400 +9,422 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e351828eb461374b8e42d2b95aa69ad, type: 3}
+  m_Script: {fileID: 11500000, guid: fb846b7682187ce4297e42d63f4a3a7d, type: 3}
   m_Name: AssetLibrary
   m_EditorClassIdentifier: 
-  wardrobe:
-  - {fileID: 100000, guid: 0d1a084dedf18a344a48599b075521ec, type: 3}
-  bed:
-  - {fileID: 100000, guid: eede23dbd9838a3408d728dbd8496a8c, type: 3}
-  - {fileID: 100000, guid: 03826036ee9ac8e4d8ca68be8431cab3, type: 3}
-  table:
-  - {fileID: 919132149155446097, guid: 4b82cd7e9460cc44b99238b70bcb8a35, type: 3}
-  - {fileID: 919132149155446097, guid: c45859c5addbe5843ab508abf7e44151, type: 3}
-  - {fileID: 100000, guid: 2c74f046c01bd7e4591c2e4e2567ca46, type: 3}
-  - {fileID: 919132149155446097, guid: f196ec0875bb26849b582673e5f4e10f, type: 3}
-  - {fileID: 1364772313310506, guid: 5b0f30563ee344b498bf4627617fde32, type: 3}
-  chair:
-  - {fileID: 919132149155446097, guid: 260a5ea3c0519ab41979c6e43ffe48e3, type: 3}
-  - {fileID: 100000, guid: 636ef07689e5cb94db6f568e6cb15df1, type: 3}
-  - {fileID: 100000, guid: 7fbca1f8946feba469173212be97dd0a, type: 3}
-  shelf:
-  - {fileID: 919132149155446097, guid: 4a9d852db0abd6048a5ea45ce4fabec8, type: 3}
-  crate: []
-  bath:
-  - {fileID: 100002, guid: 450fb73028c576343ae0321cd675ac52, type: 3}
-  - {fileID: 100000, guid: 3e66c691a68a4474286320eb7029e026, type: 3}
-  - {fileID: 100000, guid: 29f8732179c306741966fcd26426f55e, type: 3}
-  - {fileID: 919132149155446097, guid: fadbeac840bc8eb408248d7bff877651, type: 3}
-  piano: []
-  lamp:
-  - {fileID: 100000, guid: e22a5b6ca349db446bb2a6d28267d80b, type: 3}
-  - {fileID: 100000, guid: a6cb4aad363f3fb419fd659b5facc519, type: 3}
-  - {fileID: 1569245711601021121, guid: c4cfdd186096c1842a81a4293d1b80da, type: 3}
-  - {fileID: 57808910232391884, guid: a24956b5a0e552047a522ea09e794d95, type: 3}
-  relic:
-  - {fileID: 100000, guid: 91811fda631823c49b536c0b67dfec68, type: 3}
-  decor:
-  - {fileID: 100000, guid: 913d61a5ca2d96d43ba1c709260d55a7, type: 3}
-  - {fileID: 100000, guid: 5fc70289fcf1df046a32d969758ff20c, type: 3}
-  - {fileID: 100000, guid: 2a56ae9ef7aa4654a96f73bda9a4c2c6, type: 3}
-  - {fileID: 100000, guid: 2de78e17331d71b49bd26432f0301b13, type: 3}
-  - {fileID: 100000, guid: 16359bd0c00e50e4580e93430782bac3, type: 3}
-  - {fileID: 919132149155446097, guid: 24640200e12cd2e40ba3a7e70bdbf8f6, type: 3}
-  floorMat: {fileID: 0}
-  wallMat: {fileID: 0}
-  floorByType:
-  - {fileID: 2100000, guid: 5b97c3c88138b954291a448f87d9b5b2, type: 2}
-  - {fileID: 2100000, guid: 2137099b5a0689445ae94927dbce26fe, type: 2}
-  - {fileID: 2100000, guid: b375857689bc8c749a819e002181bfc5, type: 2}
-  - {fileID: 2100000, guid: e4dfccf81202b7144b4382bafabd50ab, type: 2}
-  - {fileID: 2100000, guid: 4bf20d2e9873d184994bbd333bc44061, type: 2}
-  - {fileID: 2100000, guid: eaab651cdb10ded47a6ffcd15d88afdb, type: 2}
-  - {fileID: 2100000, guid: 2137099b5a0689445ae94927dbce26fe, type: 2}
-  - {fileID: 2100000, guid: 4bf20d2e9873d184994bbd333bc44061, type: 2}
-  - {fileID: 2100000, guid: b27874f6585173e4c8fe842a17ceebf2, type: 2}
-  wallByType:
-  - {fileID: 2100000, guid: b6a0ac0240204cb4ea4b84d1e2dab2b5, type: 2}
-  - {fileID: 2100000, guid: a1d7f57e6086c9a4bb159a2e0cfb2228, type: 2}
-  - {fileID: 2100000, guid: 7c4df8c71c6e8ae42972629a610e20e6, type: 2}
-  - {fileID: 2100000, guid: 9dab67fd89e742e45a9d885d6e1e14a2, type: 2}
-  - {fileID: 2100000, guid: af5618451dbad9c4a913f502e5c7df1e, type: 2}
-  - {fileID: 2100000, guid: af5618451dbad9c4a913f502e5c7df1e, type: 2}
-  - {fileID: 2100000, guid: a1d7f57e6086c9a4bb159a2e0cfb2228, type: 2}
-  - {fileID: 2100000, guid: b6a0ac0240204cb4ea4b84d1e2dab2b5, type: 2}
-  - {fileID: 2100000, guid: b6a0ac0240204cb4ea4b84d1e2dab2b5, type: 2}
-  rugs:
-  - {fileID: 2100000, guid: 9d74a8cdbd2435d478324a142525cf3b, type: 2}
-  - {fileID: 2100000, guid: a451792c1a421aa4ba76ee446a85c476, type: 2}
-  - {fileID: 2100000, guid: f5b8db6c5de6a6a4984f8dd09c302b59, type: 2}
-  ambient:
-  - {fileID: 8300000, guid: dd7f55e125ee8f947b2f399e20aeec8c, type: 3}
-  - {fileID: 8300000, guid: 205287722f2b6b64583b86d65fdeeb11, type: 3}
-  - {fileID: 8300000, guid: 020e87438be3e994dba388f1a9feb7ea, type: 3}
-  - {fileID: 8300000, guid: c5172931fcfe7a0448a0d5d0859e44f6, type: 3}
-  music:
-  - {fileID: 8300000, guid: 370b948e9cf51454eba616a3a4a3a0f3, type: 3}
-  - {fileID: 8300000, guid: d8aa470ad08f3854ca4e61e544d82a14, type: 3}
-  - {fileID: 8300000, guid: 3a3aa39b995188e43aed9ba34a7cd4fd, type: 3}
-  - {fileID: 8300000, guid: 97c6eea99e9af754cb586d26c1ea6cc8, type: 3}
-  - {fileID: 8300000, guid: 704384127d21d0a41bff5442ca641f94, type: 3}
-  - {fileID: 8300000, guid: 4c1bd10eac44a1e4a9c31765e6208142, type: 3}
-  - {fileID: 8300000, guid: 07dc69775071b674c801102d5d3cf3d3, type: 3}
-  - {fileID: 8300000, guid: 7c5c8878121a6e740ac67f2a636ea7f5, type: 3}
-  - {fileID: 8300000, guid: 0d1bb6c25325fe84e8cef9f714ec4efd, type: 3}
-  - {fileID: 8300000, guid: 91b2201c47b40c24f906edac87df7cee, type: 3}
-  - {fileID: 8300000, guid: cc756d23930ed504baab8436686de639, type: 3}
-  - {fileID: 8300000, guid: fa3606ad74d52f449bc21b3053f22984, type: 3}
-  - {fileID: 8300000, guid: e2d5758dfa8f3994d8f3c7386a5c5f6b, type: 3}
-  - {fileID: 8300000, guid: c70a665d318b83441956f0fca3755b68, type: 3}
-  - {fileID: 8300000, guid: e80096f11277b8e4385dbb5d1a686b12, type: 3}
-  - {fileID: 8300000, guid: 78edab50161a85e41b707e393a6ba0d9, type: 3}
-  - {fileID: 8300000, guid: c60c1647e3d5bce4f999089e94e8301d, type: 3}
-  - {fileID: 8300000, guid: 848d0ab87828564418ccd8c77c1a6586, type: 3}
-  - {fileID: 8300000, guid: 944b4654fec558e4688989ce062fad07, type: 3}
-  - {fileID: 8300000, guid: 7dd0521303189c345ba6b0d05f5c89fb, type: 3}
-  - {fileID: 8300000, guid: 92e7dbbcf8d80814791bebfccefc2d0d, type: 3}
-  - {fileID: 8300000, guid: fc720b65073103545a87e155210944a1, type: 3}
-  - {fileID: 8300000, guid: 2842c9ca9a2dfb94796de1479f655b44, type: 3}
-  - {fileID: 8300000, guid: def2a139d9636ca40a855967a8b8b0b0, type: 3}
-  - {fileID: 8300000, guid: 3a97d7b4ee89f4148ae05c07be8f1b74, type: 3}
-  - {fileID: 8300000, guid: eb2f9f2a39db09245baf52a86d363a0b, type: 3}
-  - {fileID: 8300000, guid: 4ec0d6181f59e7e4582df6c8b83f1c3e, type: 3}
-  - {fileID: 8300000, guid: bd7911e4a8d7513438f7240e6c10d91b, type: 3}
-  - {fileID: 8300000, guid: e9bb20fed8746544e871c65af7977726, type: 3}
-  - {fileID: 8300000, guid: 156e08ef8d97b774493a23175626cf29, type: 3}
-  - {fileID: 8300000, guid: 993617a055df14845a73ca0df7b2eda0, type: 3}
-  - {fileID: 8300000, guid: 311a0302bd4e1694a889e1ca69994b86, type: 3}
-  - {fileID: 8300000, guid: 729434cc447f2b6498fec0dcff9e7eda, type: 3}
-  - {fileID: 8300000, guid: 8dfec5675447618429b08170e0d6381d, type: 3}
-  - {fileID: 8300000, guid: 5b4062f1e6fe3604e99a81233de0162f, type: 3}
-  - {fileID: 8300000, guid: 8215075a524f53b4b9f02be69f25b750, type: 3}
-  - {fileID: 8300000, guid: 075c101b574dbf24bbe6e7db4df25c06, type: 3}
-  - {fileID: 8300000, guid: 39e8df434844cec4fb5cb3d452d811b3, type: 3}
-  - {fileID: 8300000, guid: 609a33ab3b195db429bae77c3bb9642c, type: 3}
-  chase:
-  - {fileID: 8300000, guid: d34691ecd229ec54ca09db561b640325, type: 3}
-  - {fileID: 8300000, guid: 85ca06514ae1fcf49b93b419a39ab996, type: 3}
-  - {fileID: 8300000, guid: 21f7dc8adb7090d40be052aba8acc87f, type: 3}
-  - {fileID: 8300000, guid: 38ecb122f8e2b154f968d3c994fbdffd, type: 3}
-  scare:
-  - {fileID: 8300000, guid: 86e0f005f0b8e084698c2cf61bb6c2b6, type: 3}
-  - {fileID: 8300000, guid: 2789d5ce62baaba4ab1ee8bb172304a6, type: 3}
-  footstep:
-  - {fileID: 8300000, guid: 07e520bb410492d47bf739846d70f2a3, type: 3}
-  door: []
-  whisper:
-  - {fileID: 8300000, guid: 98ea14dfdb9dce74a976520f134fd1a2, type: 3}
-  heartbeat: []
-  pickup:
-  - {fileID: 8300000, guid: c0f716a9e9ac00c438b95158ba195a58, type: 3}
-  report: 'bath <- Assets/_3DStealthGame/Art/Models/Bathroom/BathTub.fbx
-
-    bath
-    <- Assets/_3DStealthGame/Art/Models/Bathroom/Bathtub_Leg.fbx
-
-    bath <- Assets/_3DStealthGame/Art/Models/Bathroom/Sink.fbx
-
-    bed
-    <- Assets/_3DStealthGame/Art/Models/Bedroom/Bed.FBX
-
-    bed <- Assets/_3DStealthGame/Art/Models/Bedroom/Bedside_Table.fbx
-
-    wardrobe
-    <- Assets/_3DStealthGame/Art/Models/Bedroom/Wardrobe.fbx
-
-    chair <- Assets/_3DStealthGame/Art/Models/Corridor/ArmChair.FBX
-
-    decor
-    <- Assets/_3DStealthGame/Art/Models/Corridor/PictureFrame_CatLady.FBX
-
-    decor
-    <- Assets/_3DStealthGame/Art/Models/Corridor/PictureFrame_Curvy.FBX
-
-    decor
-    <- Assets/_3DStealthGame/Art/Models/Corridor/PictureFrame_MrMan.FBX
-
-    decor
-    <- Assets/_3DStealthGame/Art/Models/Corridor/PictureFrame_StraightThin.FBX
-
-    decor
-    <- Assets/_3DStealthGame/Art/Models/Corridor/PictureFrame_Wolf.FBX
-
-    table
-    <- Assets/_3DStealthGame/Art/Models/Corridor/SmallTable_A.FBX
-
-    table <-
-    Assets/_3DStealthGame/Art/Models/Corridor/SmallTable_B.FBX
-
-    lamp <- Assets/_3DStealthGame/Art/Models/Diningroom/CandleStick.FBX
-
-    chair
-    <- Assets/_3DStealthGame/Art/Models/Diningroom/Chair_A.FBX
-
-    chair <- Assets/_3DStealthGame/Art/Models/Diningroom/Chair_B.FBX
-
-    relic
-    <- Assets/_3DStealthGame/Art/Models/Diningroom/Clock.FBX
-
-    lamp <- Assets/_3DStealthGame/Art/Models/Diningroom/Monster_Lamp.fbx
-
-    table
-    <- Assets/_3DStealthGame/Art/Models/Diningroom/Table.FBX
-
-    table <- Assets/_3DStealthGame/Art/Models/Diningroom/Table_Middle.FBX
-
-    decor
-    <- Assets/_3DStealthGame/Art/Models/Kitchen/Pot.fbx
-
-    shelf <- Assets/_3DStealthGame/Art/Models/Kitchen/Shelf.FBX
-
-    bath
-    <- Assets/_3DStealthGame/Art/Models/Kitchen/SinkKitchen.FBX
-
-    table <- Assets/_3DStealthGame/Prefabs/Environment/Decorations/Diningroom/Table_Long.prefab
-
-    lamp
-    <- Assets/_3DStealthGame/Prefabs/Environment/Decorations/General/MonsterLamp.prefab
-
-    lamp
-    <- Assets/_3DStealthGame/Prefabs/VFX/CandleFlame.prefab
-
-    audio scare <-
-    Assets/_3DStealthGame/Audio/SFXBuzzingLight.wav (5s)
-
-    audio ambient <- Assets/_3DStealthGame/Audio/SFXCandle.wav
-    (16s)
-
-    audio footstep <- Assets/_3DStealthGame/Audio/SFXFootstepsLooping.wav
-    (5s)
-
-    audio whisper <- Assets/_3DStealthGame/Audio/SFXGhostMove.wav (13s)
-
-    audio
-    ambient <- Assets/_3DStealthGame/Audio/SFXHouseAmbience.wav (34s)
-
-    audio
-    scare <- Assets/_3DStealthGame/Audio/SFXLose.wav (4s)
-
-    audio pickup <- Assets/_3DStealthGame/Audio/SFXWin.wav
-    (3s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_AMBIENCE_LOOP_Dimly_Lit_Basement.wav
-    (146s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_AMBIENCE_LOOP_Dont_Turn_Around.wav
-    (128s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_AMBIENCE_LOOP_Mirrored_Lunacy.wav
-    (182s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_AMBIENCE_LOOP_Noises_of_the_Red_Fog.wav
-    (142s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_AMBIENCE_LOOP_The_Park_Maniac.wav
-    (134s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_ATMOSPHERIC_LOOP_Abandoned_Hill.wav
-    (161s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_ATMOSPHERIC_LOOP_Anxiety_Parabole.wav
-    (133s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_ATMOSPHERIC_LOOP_Land_of_Bones.wav
-    (136s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_ATMOSPHERIC_LOOP_Mental_Breakdown.wav
-    (129s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_ATMOSPHERIC_LOOP_Mutations_Inside_the
-    Asylum.wav (131s)
-
-    audio chase <- Assets/Horror_Music_Free_Starter_Kit/WAV_HIGH_TENSION_LOOP_Sinister_Prophet.wav
-    (96s)
-
-    audio chase <- Assets/Horror_Music_Free_Starter_Kit/WAV_HIGH_TENSION_LOOP_The_Psychopath_Riddle.wav
-    (89s)
-
-    audio chase <- Assets/Horror_Music_Free_Starter_Kit/WAV_LIGHT_TENSION_LOOP_Run_for_Your_Life.wav
-    (90s)
-
-    audio chase <- Assets/Horror_Music_Free_Starter_Kit/WAV_LIGHT_TENSION_LOOP_The_Urge_to_Kill.wav
-    (96s)
-
-    audio music <- Assets/Horror_Music_Free_Starter_Kit/WAV_MENU_FULL_Systolic_Menace.wav
-    (104s)
-
-    audio music <- Assets/Unnerving Ambient Sounds - Horror Game Sound
-    Effect Pack/Alone at Twilight/Alone at Twilight 1.wav (125s)
-
-    audio music
-    <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/Alone at Twilight/Alone
-    at Twilight 2.wav (82s)
-
-    audio music <- Assets/Unnerving Ambient Sounds
-    - Horror Game Sound Effect Pack/Alone at Twilight/Alone at Twilight 3.wav (107s)
-
-    audio
-    music <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/Alone
-    at Twilight/Alone at Twilight 4.wav (75s)
-
-    audio music <- Assets/Unnerving
-    Ambient Sounds - Horror Game Sound Effect Pack/Alone at Twilight/Alone at Twilight
-    5.wav (71s)
-
-    audio music <- Assets/Unnerving Ambient Sounds - Horror Game
-    Sound Effect Pack/Close Encounter/Close Encounter 1.wav (87s)
-
-    audio music
-    <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/Close Encounter/Close
-    Encounter 2.wav (73s)
-
-    audio music <- Assets/Unnerving Ambient Sounds -
-    Horror Game Sound Effect Pack/Close Encounter/Close Encounter 3.wav (64s)
-
-    audio
-    music <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/Close
-    Encounter/Close Encounter 4.wav (64s)
-
-    audio music <- Assets/Unnerving Ambient
-    Sounds - Horror Game Sound Effect Pack/Close Encounter/Close Encounter 5.wav
-    (89s)
-
-    audio music <- Assets/Unnerving Ambient Sounds - Horror Game Sound
-    Effect Pack/Exploring Nightmare/Exploring Nightmare 1.wav (65s)
-
-    audio music
-    <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/Exploring
-    Nightmare/Exploring Nightmare 2.wav (90s)
-
-    audio music <- Assets/Unnerving
-    Ambient Sounds - Horror Game Sound Effect Pack/Exploring Nightmare/Exploring
-    Nightmare 3.wav (66s)
-
-    audio music <- Assets/Unnerving Ambient Sounds -
-    Horror Game Sound Effect Pack/Exploring Nightmare/Exploring Nightmare 4.wav (99s)
-
-    audio
-    ambient <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/Exploring
-    Nightmare/Exploring Nightmare 5.wav (13s)
-
-    audio music <- Assets/Unnerving
-    Ambient Sounds - Horror Game Sound Effect Pack/Paranormal Phenomena/Paranormal
-    Phenomena 1.wav (77s)
-
-    audio music <- Assets/Unnerving Ambient Sounds -
-    Horror Game Sound Effect Pack/Paranormal Phenomena/Paranormal Phenomena 2.wav
-    (75s)
-
-    audio ambient <- Assets/Unnerving Ambient Sounds - Horror Game Sound
-    Effect Pack/Paranormal Phenomena/Paranormal Phenomena 3.wav (57s)
-
-    audio
-    music <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/Paranormal
-    Phenomena/Paranormal Phenomena 4.wav (87s)
-
-    audio music <- Assets/Unnerving
-    Ambient Sounds - Horror Game Sound Effect Pack/Paranormal Phenomena/Paranormal
-    Phenomena 5.wav (99s)
-
-    audio music <- Assets/Unnerving Ambient Sounds -
-    Horror Game Sound Effect Pack/The Creature/The Creature 1.wav (69s)
-
-    audio
-    music <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/The
-    Creature/The Creature 2.wav (63s)
-
-    audio music <- Assets/Unnerving Ambient
-    Sounds - Horror Game Sound Effect Pack/The Creature/The Creature 3.wav (70s)
-
-    audio
-    music <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/The
-    Creature/The Creature 4.wav (81s)
-
-    audio music <- Assets/Unnerving Ambient
-    Sounds - Horror Game Sound Effect Pack/The Creature/The Creature 5.wav (74s)
-
-    audio
-    music <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/The
-    Unknown/The Unknown 1.wav (90s)
-
-    audio music <- Assets/Unnerving Ambient
-    Sounds - Horror Game Sound Effect Pack/The Unknown/The Unknown 2.wav (137s)
-
-    audio
-    music <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/The
-    Unknown/The Unknown 3.wav (105s)
-
-    audio music <- Assets/Unnerving Ambient
-    Sounds - Horror Game Sound Effect Pack/The Unknown/The Unknown 4.wav (115s)
-
-    audio
-    music <- Assets/Unnerving Ambient Sounds - Horror Game Sound Effect Pack/The
-    Unknown/The Unknown 5.wav (74s)
-
-    mat RuangTamu lantai=Floor_WoodPlanks_Light
-    dinding=Wall_Corridor
-
-    mat KamarTidur lantai=Floor_Bedroom dinding=Wall_Bedroom
+  models:
+  - key: wall
+    items:
+    - {fileID: 8668415070206593356, guid: f39473feb6028ce49a6cf37d103f9013, type: 3}
+    - {fileID: 1799097310708657951, guid: d89c903d33a696c4b9a7014531ba5242, type: 3}
+    - {fileID: 8557591752005952654, guid: c461306402c26284ba74b8a4e2092e27, type: 3}
+    - {fileID: 4547520484121568061, guid: 5871d30b7751ac04bb8d91dd3ac4cdcc, type: 3}
+  - key: window
+    items:
+    - {fileID: 1775857508448890093, guid: f4f04127c9a97d243bb52beeefa5d3a2, type: 3}
+    - {fileID: 6361199686137333486, guid: 32e02eaae78b0dc48b04bd6567ef9523, type: 3}
+  - key: window3
+    items:
+    - {fileID: 108374982962685703, guid: 14d4ff852c316e9498bbc03bbd024b7a, type: 3}
+  - key: post
+    items:
+    - {fileID: 1484874320060406, guid: 32d2a8958697bb644913bfaedcc8df68, type: 3}
+  - key: door
+    items:
+    - {fileID: 1842708414955614, guid: 141a3c088bae48f42a579375904a411c, type: 3}
+  - key: key
+    items:
+    - {fileID: 2036892858081619888, guid: 40ee6207ce14a2546ab057bd90962187, type: 3}
+  - key: wardrobe
+    items:
+    - {fileID: 989563526, guid: 1f2baa001e967a24fa7e0722636120b0, type: 3}
+  - key: bed
+    items:
+    - {fileID: 1833500994312510, guid: 645ef604d3d32e045b044529dbc554af, type: 3}
+  - key: bedside
+    items:
+    - {fileID: 4384146729215538813, guid: c68b0496eaa4e75479451d4c408f629c, type: 3}
+  - key: rug_bed
+    items:
+    - {fileID: 1271275401208547803, guid: f69f12e207e387146a17b239bb69e43e, type: 3}
+  - key: rug_bath
+    items:
+    - {fileID: 4354922291554593249, guid: bd2c0bc797c566a4c801b16afda1a5d5, type: 3}
+  - key: rug_corr
+    items:
+    - {fileID: 1756587302985266, guid: d6f7474cae3e0ab43bce6c8505c5db19, type: 3}
+  - key: rug_dining
+    items:
+    - {fileID: 1387280946514014, guid: fba3762311c1bb54eb2cea0b832496ff, type: 3}
+  - key: rug_kitchen
+    items:
+    - {fileID: 1598194785551420729, guid: e580b426991b658419b83bfc3afe5cb8, type: 3}
+  - key: bathtub
+    items:
+    - {fileID: 6261731394855753037, guid: 831774c85f3f8fd408342fdbbef7b942, type: 3}
+  - key: sink
+    items:
+    - {fileID: 8568510682837281351, guid: b1f3ad617a8b99e499ddbe1ae47e48ae, type: 3}
+  - key: mirror
+    items:
+    - {fileID: 4513317996350396120, guid: d6031845cf3b4ec40bda7a32e18cf967, type: 3}
+  - key: radiator
+    items:
+    - {fileID: 3477328128234016284, guid: 679384763b54e2b499d87044b6238222, type: 3}
+  - key: pipe
+    items:
+    - {fileID: 7622739385021486421, guid: 78b00994922f28547a21884373939367, type: 3}
+  - key: candlestick
+    items:
+    - {fileID: 1559196646925328, guid: d775be624a1870245b73e82cbc922cfc, type: 3}
+  - key: chair
+    items:
+    - {fileID: 1411128636572146, guid: 18e8f3cf6fe42a7438059622a10c61db, type: 3}
+    - {fileID: 1254134510771280, guid: 63d1dcb66a43f6048b46981a4abc3fff, type: 3}
+  - key: table_long
+    items:
+    - {fileID: 1364772313310506, guid: 5b0f30563ee344b498bf4627617fde32, type: 3}
+  - key: table_mid
+    items:
+    - {fileID: 6622514792065493233, guid: ce052bff5af3492479ed441e225667a6, type: 3}
+  - key: armchair
+    items:
+    - {fileID: 616284401426269384, guid: cbd84e147ff3fd842a3a639c83017426, type: 3}
+  - key: clock
+    items:
+    - {fileID: 1471441242596752, guid: 836b935a856cf8842a48d2069e17341f, type: 3}
+  - key: fireplace
+    items:
+    - {fileID: 1909081659121000, guid: de12a8ff68064d149b96fd74850abce6, type: 3}
+  - key: sconce
+    items:
+    - {fileID: 1235029715015770, guid: fa833c84b0dbee34b84e6427f78feff3, type: 3}
+  - key: pictures
+    items:
+    - {fileID: 5968569919534841182, guid: fd0a0afe39553f8448791941be9f6b22, type: 3}
+    - {fileID: 6060783871546966187, guid: 83c13e70b8df63a4482dbe63bdc49d85, type: 3}
+    - {fileID: 6435796326216877850, guid: 36607e53e1c1e164a8749d7c65ed673a, type: 3}
+    - {fileID: 2139128338702923119, guid: 4cabd60456262a046a3ea78ab65330de, type: 3}
+    - {fileID: 4443532894460509211, guid: fa93e43b01f7c25428bb4feedbbb86a3, type: 3}
+    - {fileID: 1595301237500297125, guid: 582e59bcc14a52f4c8e99a3c4772b89b, type: 3}
+  - key: smalltable
+    items:
+    - {fileID: 4781276516186756198, guid: cef78b3c12f1d1c458b42c8c5a72dda9, type: 3}
+    - {fileID: 7136036823778099153, guid: 074eeb70885c4c34a9cc1af18a3f3ab2, type: 3}
+  - key: cabinet
+    items:
+    - {fileID: 4180837213636850779, guid: 62ea87bd10090794bb50b1324fd27bcf, type: 3}
+    - {fileID: 2818050153979857384, guid: 043ff54150daaa54cb6cb04d08a0e437, type: 3}
+    - {fileID: 16507307983341248, guid: e069df7a630ea3b42a78f9f3563eef18, type: 3}
+  - key: cabinet_top
+    items:
+    - {fileID: 5164864744014706262, guid: 51b7c8f2a8ff44b4c8b590746d398dae, type: 3}
+  - key: fridge
+    items:
+    - {fileID: 2814670778019573633, guid: f7a73127b6e504b45abf4b5f08e4de40, type: 3}
+  - key: stove
+    items:
+    - {fileID: 4444146082274020180, guid: 107abf1a4872f0f4182ab8a7e4ec10f3, type: 3}
+  - key: hood
+    items:
+    - {fileID: 7695541911529039475, guid: 90b53260d1599844b80ab1eadf1eea02, type: 3}
+  - key: microwave
+    items:
+    - {fileID: 7572429210054247366, guid: 24b1030be3fe588439f4c0a330d2d70f, type: 3}
+  - key: shelf
+    items:
+    - {fileID: 2523046655609966140, guid: 96704b6b2d5bd1f4eb5eaeef8d3bb993, type: 3}
+  - key: sink_kitchen
+    items:
+    - {fileID: 8548806339302815671, guid: 7faefaa25b53b314fb4a9876844c49aa, type: 3}
+  - key: bottle
+    items:
+    - {fileID: 338749515669198902, guid: 11b7bf1524bef8c48bf816b0ebddba32, type: 3}
+  - key: jar
+    items:
+    - {fileID: 5241094283765772366, guid: 13031e2bd5b44ae4295842ce91743941, type: 3}
+  - key: pot
+    items:
+    - {fileID: 3842149646489859495, guid: f0361f9754cb4b64ab7c93661e5fb5a6, type: 3}
+  - key: pan
+    items:
+    - {fileID: 8602898250061035919, guid: 2257aaa87eb23ef4282462406a9cdf55, type: 3}
+  - key: plate
+    items:
+    - {fileID: 2657612685543765218, guid: ff73d74d28b95494ab035249dc7bc880, type: 3}
+  - key: fx_candle
+    items:
+    - {fileID: 57808910232391884, guid: a24956b5a0e552047a522ea09e794d95, type: 3}
+  - key: fx_dust
+    items:
+    - {fileID: 1000012882023006, guid: 5ca4c580b3888314581688fa46fb142d, type: 3}
+  - key: fx_steam
+    items:
+    - {fileID: 4863142671713977052, guid: 9edab173a51e68a4eb43c77f998d4a9a, type: 3}
+  clips:
+  - key: amb_house
+    items:
+    - {fileID: 8300000, guid: 205287722f2b6b64583b86d65fdeeb11, type: 3}
+  - key: ghost_move
+    items:
+    - {fileID: 8300000, guid: 98ea14dfdb9dce74a976520f134fd1a2, type: 3}
+  - key: footsteps
+    items:
+    - {fileID: 8300000, guid: 07e520bb410492d47bf739846d70f2a3, type: 3}
+  - key: lose
+    items:
+    - {fileID: 8300000, guid: 2789d5ce62baaba4ab1ee8bb172304a6, type: 3}
+  - key: win
+    items:
+    - {fileID: 8300000, guid: c0f716a9e9ac00c438b95158ba195a58, type: 3}
+  - key: buzz
+    items:
+    - {fileID: 8300000, guid: 86e0f005f0b8e084698c2cf61bb6c2b6, type: 3}
+  - key: candle
+    items:
+    - {fileID: 8300000, guid: dd7f55e125ee8f947b2f399e20aeec8c, type: 3}
+  - key: amb_bed
+    items:
+    - {fileID: 8300000, guid: fa3606ad74d52f449bc21b3053f22984, type: 3}
+    - {fileID: 8300000, guid: e2d5758dfa8f3994d8f3c7386a5c5f6b, type: 3}
+    - {fileID: 8300000, guid: c70a665d318b83441956f0fca3755b68, type: 3}
+    - {fileID: 8300000, guid: e80096f11277b8e4385dbb5d1a686b12, type: 3}
+    - {fileID: 8300000, guid: 78edab50161a85e41b707e393a6ba0d9, type: 3}
+    - {fileID: 8300000, guid: fc720b65073103545a87e155210944a1, type: 3}
+    - {fileID: 8300000, guid: 2842c9ca9a2dfb94796de1479f655b44, type: 3}
+    - {fileID: 8300000, guid: def2a139d9636ca40a855967a8b8b0b0, type: 3}
+    - {fileID: 8300000, guid: 3a97d7b4ee89f4148ae05c07be8f1b74, type: 3}
+    - {fileID: 8300000, guid: 020e87438be3e994dba388f1a9feb7ea, type: 3}
+    - {fileID: 8300000, guid: eb2f9f2a39db09245baf52a86d363a0b, type: 3}
+    - {fileID: 8300000, guid: 4ec0d6181f59e7e4582df6c8b83f1c3e, type: 3}
+    - {fileID: 8300000, guid: c5172931fcfe7a0448a0d5d0859e44f6, type: 3}
+    - {fileID: 8300000, guid: bd7911e4a8d7513438f7240e6c10d91b, type: 3}
+    - {fileID: 8300000, guid: e9bb20fed8746544e871c65af7977726, type: 3}
+    - {fileID: 8300000, guid: 5b4062f1e6fe3604e99a81233de0162f, type: 3}
+    - {fileID: 8300000, guid: 8215075a524f53b4b9f02be69f25b750, type: 3}
+    - {fileID: 8300000, guid: 075c101b574dbf24bbe6e7db4df25c06, type: 3}
+    - {fileID: 8300000, guid: 39e8df434844cec4fb5cb3d452d811b3, type: 3}
+    - {fileID: 8300000, guid: 609a33ab3b195db429bae77c3bb9642c, type: 3}
+  - key: ghost_near
+    items:
+    - {fileID: 8300000, guid: c60c1647e3d5bce4f999089e94e8301d, type: 3}
+    - {fileID: 8300000, guid: 848d0ab87828564418ccd8c77c1a6586, type: 3}
+    - {fileID: 8300000, guid: 944b4654fec558e4688989ce062fad07, type: 3}
+    - {fileID: 8300000, guid: 7dd0521303189c345ba6b0d05f5c89fb, type: 3}
+    - {fileID: 8300000, guid: 92e7dbbcf8d80814791bebfccefc2d0d, type: 3}
+    - {fileID: 8300000, guid: 156e08ef8d97b774493a23175626cf29, type: 3}
+    - {fileID: 8300000, guid: 993617a055df14845a73ca0df7b2eda0, type: 3}
+    - {fileID: 8300000, guid: 311a0302bd4e1694a889e1ca69994b86, type: 3}
+    - {fileID: 8300000, guid: 729434cc447f2b6498fec0dcff9e7eda, type: 3}
+    - {fileID: 8300000, guid: 8dfec5675447618429b08170e0d6381d, type: 3}
+  - key: music_explore
+    items:
+    - {fileID: 8300000, guid: 370b948e9cf51454eba616a3a4a3a0f3, type: 3}
+    - {fileID: 8300000, guid: d8aa470ad08f3854ca4e61e544d82a14, type: 3}
+    - {fileID: 8300000, guid: 3a3aa39b995188e43aed9ba34a7cd4fd, type: 3}
+    - {fileID: 8300000, guid: 97c6eea99e9af754cb586d26c1ea6cc8, type: 3}
+    - {fileID: 8300000, guid: 704384127d21d0a41bff5442ca641f94, type: 3}
+    - {fileID: 8300000, guid: 4c1bd10eac44a1e4a9c31765e6208142, type: 3}
+    - {fileID: 8300000, guid: 07dc69775071b674c801102d5d3cf3d3, type: 3}
+    - {fileID: 8300000, guid: 7c5c8878121a6e740ac67f2a636ea7f5, type: 3}
+    - {fileID: 8300000, guid: 0d1bb6c25325fe84e8cef9f714ec4efd, type: 3}
+    - {fileID: 8300000, guid: 91b2201c47b40c24f906edac87df7cee, type: 3}
+  - key: music_chase
+    items:
+    - {fileID: 8300000, guid: d34691ecd229ec54ca09db561b640325, type: 3}
+    - {fileID: 8300000, guid: 85ca06514ae1fcf49b93b419a39ab996, type: 3}
+    - {fileID: 8300000, guid: 21f7dc8adb7090d40be052aba8acc87f, type: 3}
+  - key: music_menu
+    items:
+    - {fileID: 8300000, guid: cc756d23930ed504baab8436686de639, type: 3}
+  materials:
+  - key: floor_wood
+    item: {fileID: 2100000, guid: 4bf20d2e9873d184994bbd333bc44061, type: 2}
+  - key: floor_wood_light
+    item: {fileID: 2100000, guid: 5b97c3c88138b954291a448f87d9b5b2, type: 2}
+  - key: floor_bedroom
+    item: {fileID: 2100000, guid: 2137099b5a0689445ae94927dbce26fe, type: 2}
+  - key: floor_bath
+    item: {fileID: 2100000, guid: e4dfccf81202b7144b4382bafabd50ab, type: 2}
+  - key: floor_dining
+    item: {fileID: 2100000, guid: eaab651cdb10ded47a6ffcd15d88afdb, type: 2}
+  - key: floor_tiles_green
+    item: {fileID: 2100000, guid: b375857689bc8c749a819e002181bfc5, type: 2}
+  - key: floor_tiles_red
+    item: {fileID: 2100000, guid: b27874f6585173e4c8fe842a17ceebf2, type: 2}
+  - key: wall_corridor
+    item: {fileID: 2100000, guid: b6a0ac0240204cb4ea4b84d1e2dab2b5, type: 2}
+  - key: wall_bedroom
+    item: {fileID: 2100000, guid: a1d7f57e6086c9a4bb159a2e0cfb2228, type: 2}
+  - key: wall_kitchen
+    item: {fileID: 2100000, guid: 7c4df8c71c6e8ae42972629a610e20e6, type: 2}
+  - key: wall_bath
+    item: {fileID: 2100000, guid: 9dab67fd89e742e45a9d885d6e1e14a2, type: 2}
+  - key: wall_dining
+    item: {fileID: 2100000, guid: af5618451dbad9c4a913f502e5c7df1e, type: 2}
+  volumeProfile: {fileID: 11400000, guid: 05891a7f5c0a0684c93ecc7c2e7f4b0a, type: 2}
+  skyTexture: {fileID: 8900000, guid: 925480c73397cf94dbf5ecfdaa5d503a, type: 3}
+  titleFont: {fileID: 12800000, guid: 915b03c09fe744ec4996cac4a8543281, type: 3}
+  bodyFont: {fileID: 0}
+  report: 'model wall: 4
+
+    model window: 2
+
+    model window3: 1
+
+    model
+    post: 1
+
+    model door: 1
+
+    model key: 1
+
+    model wardrobe: 1
+
+    model
+    bed: 1
+
+    model bedside: 1
+
+    model rug_bed: 1
+
+    model rug_bath: 1
+
+    model
+    rug_corr: 1
+
+    model rug_dining: 1
+
+    model rug_kitchen: 1
+
+    model
+    bathtub: 1
+
+    model sink: 1
+
+    model mirror: 1
+
+    model radiator: 1
+
+    model
+    pipe: 1
+
+    model candlestick: 1
+
+    model chair: 2
+
+    model table_long:
+    1
+
+    model table_mid: 1
+
+    model armchair: 1
+
+    model clock: 1
+
+    model
+    fireplace: 1
+
+    model sconce: 1
+
+    model pictures: 6
+
+    model smalltable:
+    2
+
+    model cabinet: 3
+
+    model cabinet_top: 1
+
+    model fridge: 1
+
+    model
+    stove: 1
+
+    model hood: 1
+
+    model microwave: 1
+
+    model shelf: 1
+
+    model
+    sink_kitchen: 1
+
+    model bottle: 1
+
+    model jar: 1
+
+    model pot: 1
+
+    model
+    pan: 1
+
+    model plate: 1
+
+    model fx_candle: 1
+
+    model fx_dust: 1
+
+    model
+    fx_steam: 1
+
+    mat floor_wood: Floor_WoodPlanks
+
+    mat floor_wood_light:
+    Floor_WoodPlanks_Light
+
+    mat floor_bedroom: Floor_Bedroom
+
+    mat floor_bath:
+    Floor_Bathroom
+
+    mat floor_dining: Floor_DinningRoom
+
+    mat floor_tiles_green:
+    Floor_TIlesGreen
+
+    mat floor_tiles_red: Floor_TilesRedish
+
+    mat wall_corridor:
+    Wall_Corridor
+
+    mat wall_bedroom: Wall_Bedroom
+
+    mat wall_kitchen: Wall_Kitchen
 
     mat
-    Dapur lantai=Floor_TIlesGreen dinding=Wall_Kitchen
+    wall_bath: Wall_Bathroom
 
-    mat KamarMandi lantai=Floor_Bathroom
-    dinding=Wall_Bathroom
+    mat wall_dining: Wall_Diningroom
 
-    mat Perpustakaan lantai=Floor_WoodPlanks dinding=Wall_Diningroom
+    audio amb_house:
+    1
 
-    mat
-    RuangMakan lantai=Floor_DinningRoom dinding=Wall_Diningroom
+    audio ghost_move: 1
 
-    mat KamarAnak
-    lantai=Floor_Bedroom dinding=Wall_Bedroom
+    audio footsteps: 1
 
-    mat Gudang lantai=Floor_WoodPlanks
-    dinding=Wall_Corridor
+    audio lose: 1
 
-    mat RuangKeluarga lantai=Floor_TilesRedish dinding=Wall_Corridor
+    audio
+    win: 1
+
+    audio buzz: 1
+
+    audio candle: 1
+
+    audio amb_bed: 20
+
+    audio
+    ghost_near: 10
+
+    audio music_explore: 10
+
+    audio music_chase: 3
+
+    audio
+    music_menu: 1
+
+    volume True, sky True, font True
 
 '

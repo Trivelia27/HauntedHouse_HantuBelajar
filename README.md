@@ -2,7 +2,7 @@
 
 3D First-Person Survival Horror (Unity 6000.0.83f1, URP) dengan **Procedural Content Generation**, **Dynamic Difficulty Adjustment**, dan **Game AI** berupa hantu yang mempelajari kebiasaan pemain.
 
-Pemain terjebak di rumah berhantu yang berubah setiap malam. Kumpulkan semua relik (satu biasanya ada di ruang yang digembok, kuncinya tersembunyi di bagian lain rumah), lalu kabur lewat pintu keluar. Pemain bisa berjalan, berlari (stamina), berjongkok, memakai senter (baterai terbatas), dan bersembunyi di lemari atau kolong ranjang. Hantu mengingat tempat sembunyi dan jalur favoritmu, dan tingkat kesulitan menyesuaikan caramu bermain.
+Pemain terjebak di rumah berhantu yang berubah setiap malam. Kumpulkan semua relik (satu biasanya ada di ruang yang digembok, kuncinya tersembunyi di bagian lain rumah), lalu kabur lewat pintu keluar. Pemain bisa berjalan, berlari (stamina), berjongkok, memakai senter (baterai terbatas, bisa difokuskan), dan bersembunyi di lemari atau kolong ranjang. Di persembunyian pemain **aman**: hantu tidak bisa melihat atau menemukannya. Namun hantu mengingat jalur dan tempat sembunyi favoritmu, lalu menghadang dan berjaga di sana. Tingkat kesulitan menyesuaikan caramu bermain.
 
 ## Menjalankan
 1. Buka folder ini dengan Unity **6000.0.83f1**.
@@ -21,14 +21,23 @@ Build Windows: **Tools > Hantu Belajar > Build Windows (.exe)** -> `Builds/Windo
 |---|---|
 | WASD / Mouse | bergerak / melihat |
 | Shift / C (Ctrl) | lari / jongkok |
-| F | senter |
+| F / tahan klik kanan | senter nyala-mati / fokuskan senter (lebih terang & jauh, boros baterai) |
 | E | ambil relik, kunci, baterai; buka gembok; sembunyi / keluar |
-| Esc | jeda (Lanjutkan, Pengaturan, Cara Bermain, Menu Utama) |
-| F1 | mode presentasi: panel PCG-DDA-AI + peta + status hantu |
-| Tab / M | panel / peta |
+| M | denah lengkap rumah (kedua lantai + jalur ke tujuan) |
+| Esc | jeda (Lanjutkan, Panduan, Pengaturan, Menu Utama + denah rumah) |
+| F1 | mode presentasi: panel PCG-DDA-AI, status hantu, hantu & heatmap jalur di peta |
+| Tab | panel presentasi |
 | G | rumah baru (PCG) |
 | F2 / F3 | kesulitan DDA turun / naik |
 | F5 / F6 / F9 | bekukan hantu / panggil hantu mengejar / hapus memori hantu |
+
+## Antarmuka & panduan (`Scripts/UI`)
+- **Menu utama** dengan kartu *Memori Hantu* (berapa kali kamu bersembunyi & tempat favoritmu), **pengaturan bertab** (Kontrol, Grafis, Audio, Gameplay), layar jeda dengan **denah rumah**, layar akhir dengan statistik dan perubahan kesulitan DDA.
+- **Panduan bermain** 4 halaman (tujuan, kontrol, sifat hantu, petunjuk arah) otomatis muncul saat pertama kali bermain; bisa dibuka lagi dari menu / jeda.
+- **Panduan awal** (checklist) di rumah pertama: bergerak, senter, peta, ambil relik, bersembunyi. Hantu tetap tidur sampai langkah dasar selesai.
+- **Kompas** di atas layar menunjuk tujuan berikutnya (relik terdekat -> kunci -> gembok -> pintu keluar) mengikuti jalur **A\*** rumah (lewat pintu & tangga), lengkap dengan jarak dan tanda naik/turun tangga; baterai ditandai saat senter hampir habis.
+- **Peta mini** berputar mengikuti arah pandang + **denah penuh (M)** kedua lantai: relik, kunci, pintu digembok, pintu keluar, baterai, tempat sembunyi, tangga, jalur ke tujuan, ruangan yang sudah dikunjungi.
+- Ikon, kartu, tombol, keycap dibuat prosedural (`Icons`, `UIKit`); font Bahnschrift / Segoe UI dari Windows dengan cadangan bawaan Unity.
 
 ## Sistem
 ### Procedural Content Generation (`Scripts/PCG`)
@@ -44,19 +53,25 @@ Build Windows: **Tools > Hantu Belajar > Build Windows (.exe)** -> `Builds/Windo
 `HouseBuilder` + `Furnish` mengubah data menjadi rumah 3D dari modul paket Haunted House (dinding dua sisi per tipe ruangan, jendela + cahaya bulan, kusen pintu, tangga berpagar, perabot per tipe ruangan, lampu dinding, perapian menyala, lilin). Hasil uji: `Hasil_Eksperimen_PCG.md`.
 
 ### Game AI (`Scripts/AI`)
-- `GhostAI`: **Finite State Machine** Patroli / Hadang / Selidiki / Kejar / Cari / Periksa / Muncul, gerak **A\*** pada graf node (termasuk tangga), indra penglihatan (kerucut pandang + raycast; senter menyala = lebih terlihat, ruang gelap & jongkok = sulit terlihat) dan pendengaran (langkah kaki; beda lantai lebih redup).
-- `GhostMemory`: model belajar **probabilistik**. Tiap tempat sembunyi = distribusi **Beta(alfa, beta)** dengan prior dari kebiasaan lintas rumah (hitungan Dirichlet per jenis tempat & tipe ruangan). Saat mencari, hantu memakai **Thompson sampling** (sampel theta ~ Beta) sehingga belajar tetapi tetap bereksplorasi. Jalur favorit dicatat sebagai heatmap dengan peluruhan; lokasi hadang dipilih dengan softmax.
+- `GhostAI`: **Finite State Machine** Patroli / Hadang / Selidiki / Kejar / Cari / Periksa / Jaga / Muncul, gerak **A\*** pada graf node (termasuk tangga), indra penglihatan (kerucut pandang + raycast; senter menyala = lebih terlihat, ruang gelap & jongkok = sulit terlihat) dan pendengaran (langkah kaki; beda lantai lebih redup).
+- **Hantu tidak tahu pemain bersembunyi**: pemain di persembunyian tidak terlihat, tidak terdengar, tidak bisa ditangkap, dan tidak pernah ditemukan saat hantu memeriksa tempat itu. Hantu hanya tahu posisi terakhir pemain terlihat; tekanan "muncul dekat pemain" juga berhenti selama pemain bersembunyi.
+- `GhostMemory`: model belajar **probabilistik**. Tiap tempat sembunyi = distribusi **Beta(alfa, beta)** dengan prior dari kebiasaan lintas rumah (hitungan Dirichlet per jenis tempat & tipe ruangan); kebiasaan dicatat setelah pemain keluar dari persembunyian. Hantu memakai **Thompson sampling** (sampel theta ~ Beta) untuk memilih tempat yang diperiksa dan tempat **berjaga** (state Jaga), sehingga belajar tetapi tetap bereksplorasi. Jalur favorit dicatat sebagai heatmap dengan peluruhan; lokasi hadang dipilih dengan softmax.
 - Lampu berkedip saat hantu dekat, jumpscare saat tertangkap.
+
+### Senter (`Scripts/Player`)
+Lampu sorot dengan bayangan lembut, pola cahaya (cookie) prosedural bertitik terang di tengah, cahaya sebaran lebar, dan sinar yang diarahkan ke titik bidik (sedikit tertinggal saat menoleh). Tahan klik kanan untuk mode fokus. Baterai tahan +-4,5 - 10 menit tergantung kesulitan, baru meredup di bawah 20% dan tersendat di bawah 8%.
 
 ### Dynamic Difficulty Adjustment (`Scripts/DDA`)
 - `DDAManager`: indikator tiap 8 detik (tempo relik dibanding jadwal, waktu dikejar, baterai, waktu sembunyi, nyaris tertangkap) -> skor **P** -> dihaluskan (EMA) -> `d += (P - 0,62) x 0,1`, dibatasi +0,15 / -0,3 per rumah. Event: tertangkap -0,15, relik +0,03, lolos +0,08. Evaluasi berhenti saat jeda atau hantu dibekukan.
-- `DdaMap`: d -> parameter hantu (kecepatan, pandang, dengar, lama mencari, bobot belajar, peluang memeriksa, eksplorasi), pengurasan baterai, dan parameter PCG rumah berikutnya (jumlah lantai, ukuran, tempat sembunyi, baterai, relik, ruang terkunci, jarak relik-tempat sembunyi, proporsi lampu menyala).
+- `DdaMap`: d -> parameter hantu (kecepatan, pandang, dengar, lama mencari, bobot belajar, lama berjaga, eksplorasi), pengurasan baterai senter, dan parameter PCG rumah berikutnya (jumlah lantai, ukuran, tempat sembunyi, baterai, relik, ruang terkunci, jarak relik-tempat sembunyi, proporsi lampu menyala).
 - Eksperimen bot (Pro / Sedang / Lemah, dengan vs tanpa DDA): `Hasil_Eksperimen_DDA.md`.
 
 Alur integrasi: Performa Pemain -> DDA -> parameter Game AI + parameter PCG -> perubahan gameplay, ditambah memori belajar hantu sebagai adaptasi jangka panjang.
 
 ## Pengujian otomatis (Tools > Hantu Belajar > Uji)
-- **Screenshot visual** -> `TestOutput/shots/`
+- **Screenshot visual** -> `TestOutput/shots/` (semua layar menu, HUD, peta, panduan)
+- **Alur pemain** -> klik tombol UI sungguhan: menu -> panduan -> panduan awal -> peta -> jeda/pengaturan -> kunci & gembok -> menang -> rumah berikutnya -> menu -> lanjutkan
+- **Apakah hantu tahu pemain bersembunyi** -> 10 cek (tidak terlihat, tidak ditemukan saat diperiksa, berjaga lalu pergi, heatmap tidak mencatat)
 - **Bot bermain (smoke)** -> `TestOutput/report_smoke.txt` (error, macet, posisi di luar batas)
 - **Eksperimen DDA** -> `Hasil_Eksperimen_DDA.md`
 - **Eksperimen PCG** -> `Hasil_Eksperimen_PCG.md`

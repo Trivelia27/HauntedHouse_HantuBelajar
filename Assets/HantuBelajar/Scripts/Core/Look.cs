@@ -313,11 +313,12 @@ namespace HantuBelajar
                     for (int y = 0; y < N; y++)
                     {
                         float d = new Vector2(x - N / 2f + 0.5f, y - N / 2f + 0.5f).magnitude / (N / 2f);
-                        float core = Mathf.Clamp01(1f - d * 1.05f);
-                        float ring = Mathf.Exp(-Mathf.Pow((d - 0.42f) / 0.06f, 2f)) * 0.25f;
-                        float spec = Mathf.PerlinNoise(x * 0.06f, y * 0.06f) * 0.18f;
-                        float v = Mathf.Clamp01(Mathf.Pow(core, 0.6f) * (0.82f + spec) + ring);
-                        if (d > 0.98f) v = 0f;
+                        // pola senter sungguhan: titik panas terang, korona lembut, cincin reflektor tipis, tepi halus (tanpa bintik)
+                        float hot = Mathf.Exp(-(d * d) / (2f * 0.2f * 0.2f));
+                        float corona = Mathf.Pow(Mathf.Clamp01(1f - d), 0.8f);
+                        float ring = Mathf.Exp(-Mathf.Pow((d - 0.3f) / 0.035f, 2f)) * 0.08f + Mathf.Exp(-Mathf.Pow((d - 0.62f) / 0.05f, 2f)) * 0.05f;
+                        float e = Mathf.Clamp01((d - 0.85f) / 0.15f); float edge = 1f - e * e * (3f - 2f * e);
+                        float v = Mathf.Clamp01((0.55f * hot + 0.48f * corona + ring) * edge);
                         t.SetPixel(x, y, new Color(v, v, v, v));
                     }
                 t.Apply(); tex["cookie"] = t; return t;

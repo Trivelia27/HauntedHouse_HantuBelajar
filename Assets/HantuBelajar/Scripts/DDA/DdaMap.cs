@@ -26,7 +26,7 @@ namespace HantuBelajar
 
         public struct GhostParams
         {
-            public float patrolSpeed, chaseSpeed, visionRange, fov, hearingMult, searchTime, learnWeight, checkMul, loseTime, explore, batteryDrain, pressureTime, awakeDelay, catchHold, chaseWindup;
+            public float patrolSpeed, chaseSpeed, visionRange, fov, hearingMult, searchTime, learnWeight, guardTime, loseTime, explore, batteryDrain, pressureTime, awakeDelay, catchHold, chaseWindup;
         }
 
         public static GhostParams Ghost(float d)
@@ -41,10 +41,10 @@ namespace HantuBelajar
                 hearingMult = Mathf.Lerp(0.55f, 1.3f, d),
                 searchTime = Mathf.Lerp(8f, 18f, d),
                 learnWeight = Mathf.Lerp(0.3f, 0.95f, d),
-                checkMul = Mathf.Lerp(0.5f, 1.1f, d),
+                guardTime = Mathf.Lerp(4f, 11f, d),          // lama berjaga dekat tempat sembunyi yang dicurigai (dari kebiasaan pemain)
                 loseTime = Mathf.Lerp(2f, 3.8f, d),
                 explore = Mathf.Lerp(0.35f, 0.08f, d),
-                batteryDrain = Mathf.Lerp(0.55f, 1.3f, d),
+                batteryDrain = Mathf.Lerp(0.16f, 0.36f, d),     // %/detik: 100% tahan +-10 menit (mudah) s.d. +-4,6 menit (sulit)
                 pressureTime = Mathf.Lerp(90f, 40f, d),
                 awakeDelay = Mathf.Lerp(22f, 10f, d),        // hantu baru aktif setelah beberapa detik
                 catchHold = Mathf.Lerp(0.4f, 0.15f, d),      // harus menempel sesaat sebelum menangkap (ada kesempatan lolos)

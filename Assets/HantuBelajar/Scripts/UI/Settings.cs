@@ -8,7 +8,7 @@ namespace HantuBelajar
     public static class Settings
     {
         public static float Sensitivity = 2f, Master = 0.9f, Music = 0.75f, Sfx = 1f, Fov = 72f, Brightness = 0f;
-        public static bool InvertY, HeadBob = true, Fullscreen = true, Hints = true;
+        public static bool InvertY, HeadBob = true, Fullscreen = true, Hints = true, Minimap = true, Compass = true;
         public static int Quality = 2;
         static bool loaded;
 
@@ -26,6 +26,8 @@ namespace HantuBelajar
             HeadBob = PlayerPrefs.GetInt("HB_Bob", 1) == 1;
             Fullscreen = PlayerPrefs.GetInt("HB_Full", 1) == 1;
             Hints = PlayerPrefs.GetInt("HB_Hints", 1) == 1;
+            Minimap = PlayerPrefs.GetInt("HB_Minimap", 1) == 1;
+            Compass = PlayerPrefs.GetInt("HB_Compass", 1) == 1;
             Quality = PlayerPrefs.GetInt("HB_Quality", 2);
         }
 
@@ -35,6 +37,7 @@ namespace HantuBelajar
             PlayerPrefs.SetFloat("HB_Sfx", Sfx); PlayerPrefs.SetFloat("HB_Fov", Fov); PlayerPrefs.SetFloat("HB_Bright", Brightness);
             PlayerPrefs.SetInt("HB_Invert", InvertY ? 1 : 0); PlayerPrefs.SetInt("HB_Bob", HeadBob ? 1 : 0); PlayerPrefs.SetInt("HB_Full", Fullscreen ? 1 : 0);
             PlayerPrefs.SetInt("HB_Hints", Hints ? 1 : 0); PlayerPrefs.SetInt("HB_Quality", Quality);
+            PlayerPrefs.SetInt("HB_Minimap", Minimap ? 1 : 0); PlayerPrefs.SetInt("HB_Compass", Compass ? 1 : 0);
             PlayerPrefs.Save();
         }
 
@@ -50,6 +53,12 @@ namespace HantuBelajar
                 urp.shadowDistance = Quality == 0 ? 14f : Quality == 1 ? 22f : 30f;
                 urp.msaaSampleCount = Quality == 2 ? 2 : 1;
             }
+        }
+
+        public static void ResetDefaults()
+        {
+            Sensitivity = 2f; Master = 0.9f; Music = 0.75f; Sfx = 1f; Fov = 72f; Brightness = 0f;
+            InvertY = false; HeadBob = true; Fullscreen = true; Hints = true; Minimap = true; Compass = true; Quality = 2;
         }
 
         public static string QualityName(int q) { return q == 0 ? "Rendah" : q == 1 ? "Sedang" : "Tinggi"; }

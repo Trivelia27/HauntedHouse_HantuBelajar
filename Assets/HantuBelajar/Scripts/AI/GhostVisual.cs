@@ -18,7 +18,7 @@ namespace HantuBelajar
         {
             body = new GameObject("Body").transform; body.SetParent(transform, false);
             Texture2D tex = Resources.Load<Texture2D>("Kenney/ghost_colormap");
-            mat = new Material(Look.Fade("ghostBase", new Color(0.82f, 0.86f, 0.92f, 0.62f), tex)) { name = "GhostMat" };
+            mat = new Material(Look.Fade("ghostBase", new Color(0.52f, 0.56f, 0.64f, 0.62f), tex)) { name = "GhostMat" };
             if (tex != null && mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", tex);
             mat.SetFloat("_Smoothness", 0.1f);
             mat.EnableKeyword("_EMISSION");
@@ -71,7 +71,7 @@ namespace HantuBelajar
         public void Tick(GhostState s, bool see, float speed01, float dt)
         {
             float t = Time.time + t0;
-            Color target = s == GhostState.Kejar ? new Color(1f, 0.12f, 0.08f) : s == GhostState.Hadang ? new Color(0.75f, 0.3f, 1f) :
+            Color target = s == GhostState.Kejar ? new Color(1f, 0.12f, 0.08f) : (s == GhostState.Hadang || s == GhostState.Jaga) ? new Color(0.75f, 0.3f, 1f) :
                            (s == GhostState.Cari || s == GhostState.Periksa || s == GhostState.Selidiki) ? new Color(1f, 0.65f, 0.15f) : new Color(0.55f, 0.75f, 1f);
             eyeCol = Color.Lerp(eyeCol, target, 1f - Mathf.Exp(-dt * 5f));
             eyeMat.SetColor("_EmissionColor", eyeCol * (6f + lunge * 6f));
@@ -93,7 +93,7 @@ namespace HantuBelajar
             // transparansi berdenyut + skala saat menerjang
             float a = alpha * (0.5f + Mathf.PerlinNoise(t * 2.2f, 1.7f) * 0.2f + (s == GhostState.Kejar ? 0.15f : 0f));
             Color c = mat.color; c.a = a; mat.color = c;
-            mat.SetColor("_EmissionColor", new Color(0.05f, 0.065f, 0.09f) * alpha);
+            mat.SetColor("_EmissionColor", new Color(0.07f, 0.09f, 0.13f) * alpha);
             body.localScale = Vector3.one * (1f + lunge * 0.12f);
             eyesRoot.gameObject.SetActive(alpha > 0.15f);
             var em = wisps.emission; em.rateOverTime = 14f * alpha;

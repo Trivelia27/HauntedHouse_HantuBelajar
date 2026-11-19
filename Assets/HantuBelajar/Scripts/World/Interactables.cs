@@ -40,7 +40,15 @@ namespace HantuBelajar
         public override Vector3 UsePoint { get { return exitPos; } }
 
         /// <summary>Dipanggil hantu saat memeriksa tempat ini.</summary>
-        public void Inspect(float dur) { shake = dur; checksThisHouse++; }
+        public void Inspect(float dur)
+        {
+            shake = dur; checksThisHouse++;
+            if (occupied && GameManager.I != null)
+            {
+                GameManager.I.dda.OnNearMiss();   // momen tegang untuk DDA; tidak memengaruhi keputusan hantu
+                GhostMemory.Feed("Hantu memeriksa " + KindName + " dari luar... tidak tahu kamu di dalam");
+            }
+        }
 
         void Update()
         {

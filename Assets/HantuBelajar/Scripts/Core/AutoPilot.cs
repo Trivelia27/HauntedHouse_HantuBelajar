@@ -41,7 +41,7 @@ namespace HantuBelajar
             if (p.hidden)
             {
                 p.autoDir = Vector3.zero; mode = "Bersembunyi";
-                bool safe = g.state != GhostState.Kejar && g.state != GhostState.Periksa && !(g.state == GhostState.Cari && gd < 10f) && gd > 6f;
+                bool safe = g.state != GhostState.Kejar && g.state != GhostState.Periksa && !((g.state == GhostState.Cari || g.state == GhostState.Jaga) && gd < 10f) && gd > 6f;
                 hideWait = safe ? hideWait + dt : 0f;
                 if (hideWait > (profile == Profile.Pro ? 2.5f : 4f)) { p.ExitHide(); hideWait = 0f; route = null; target = null; }
                 return;

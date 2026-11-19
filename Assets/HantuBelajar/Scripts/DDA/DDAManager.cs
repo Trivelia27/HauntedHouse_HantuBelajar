@@ -83,6 +83,7 @@ namespace HantuBelajar
         public void OnWin() { winsTotal++; Shift(EvWin, "pemain lolos"); }
         public void OnChaseStart() { chasesHouse++; }
         public void OnHide() { hidesHouse++; }
+        public void OnNearMiss() { nearMisses++; winNear++; }
         public void OnNoise(float level) { }
         public void Force(float delta) { Shift(delta, "manual (F2/F3)", true); }
 

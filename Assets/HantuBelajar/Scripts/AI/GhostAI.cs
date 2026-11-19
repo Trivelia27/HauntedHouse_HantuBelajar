@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace HantuBelajar
 {
-    public enum GhostState { Patroli, Hadang, Selidiki, Kejar, Cari, Periksa, Muncul }
+    public enum GhostState { Patroli, Hadang, Selidiki, Kejar, Cari, Periksa, Muncul, Jaga }
 
     /// <summary>
     /// Hantu = Finite State Machine. Keputusan di tiap state memakai data belajar (GhostMemory) dan parameter DDA.
@@ -19,13 +19,14 @@ namespace HantuBelajar
         public HidingSpot inspecting;
         public string searchInfo = "";
         public int catches, checksMade;
+        public bool holdSleep;          // panduan awal: hantu tetap tidur sampai pemain siap
+        HidingSpot guardSpot; float guardT;
 
         HouseLayout L; HouseInstance H; PlayerController pl;
         int pathIdx;
         Vector3Int lastKnownNode, targetNode;
         Vector3 lastSeenPos, stuckPos;
-        float lost, linger, repath, graceUntil, sawHideT = -99f, stuckT, fadeT, wanderT, heardT, catchT, windupT;
-        HidingSpot sawHideSpot;
+        float lost, linger, repath, graceUntil, stuckT, fadeT, wanderT, heardT, catchT, windupT;
         readonly List<HidingSpot> queue = new List<HidingSpot>();
         readonly Dictionary<int, float> roomVisit = new Dictionary<int, float>();
         GhostVisual vis; AudioSource moveSrc, whisper;
@@ -63,7 +64,7 @@ namespace HantuBelajar
             lastFramePos = transform.position; stuckPos = transform.position; stuckT = 0f;
             if (moveSrc.clip != null && !moveSrc.isPlaying) moveSrc.Play();
             if (whisper.clip != null && !whisper.isPlaying) whisper.Play();
-            vis.SetAlpha(0f); asleep = true;
+            vis.SetAlpha(0f); asleep = true; holdSleep = false; guardSpot = null;
             decision = "Tertidur... bangun dalam " + D.awakeDelay.ToString("0") + " dtk";
         }
         bool asleep;
@@ -99,6 +100,7 @@ namespace HantuBelajar
                 // fase tidur: tidak bergerak, tidak melihat, tidak menangkap
                 vis.SetAlpha(0f); vis.Tick(state, false, 0f, dt);
                 moveSrc.volume = 0f; whisper.volume = 0f;
+                if (holdSleep) graceUntil = Mathf.Max(graceUntil, Time.time + Mathf.Min(D.awakeDelay, 10f));
                 if (Time.time >= graceUntil)
                 {
                     asleep = false; unseenTime = 0f;
@@ -112,14 +114,14 @@ namespace HantuBelajar
             heardT -= dt; heardRecently = heardT > 0f;
             Perceive();
             if (canSee) { unseenTime = 0f; lastSeenPos = pl.transform.position; lastKnownNode = pl.node; }
-            else unseenTime += dt;
+            else unseenTime = pl.hidden ? Mathf.Min(unseenTime + dt, D.pressureTime * 0.5f) : unseenTime + dt;   // saat pemain bersembunyi hantu tidak "merasakan" apa pun
 
             switch (state)
             {
                 case GhostState.Patroli:
                 case GhostState.Hadang:
                     if (canSee) { StartChase(); break; }
-                    if (unseenTime > D.pressureTime && PathDistToPlayer() > 9) { BeginAppear(); break; }
+                    if (unseenTime > D.pressureTime && !pl.hidden && PathDistToPlayer() > 9) { BeginAppear(); break; }
                     if (Follow(D.patrolSpeed))
                     {
                         linger -= dt;
@@ -138,25 +140,19 @@ namespace HantuBelajar
                     break;
                 case GhostState.Kejar:
                     {
-                        if (pl.hidden)
-                        {
-                            bool saw = pl.spot != null && (Time.time - sawHideT < 1.5f);
-                            // hanya tahu lokasi tempat sembunyi bila MELIHAT pemain masuk; selain itu cari di posisi terakhir pemain terlihat
-                            BeginSearch(saw ? pl.spot.frontNode : lastKnownNode, saw ? "Melihatmu masuk ke " + pl.spot.KindName + "!" : "Pemain hilang dari pandangan", saw);
-                            break;
-                        }
+                        // pemain yang bersembunyi hanya "hilang dari pandangan": hantu tidak diberi tahu, ia menuju posisi terakhir pemain terlihat
                         if (windupT > 0f)
                         {
                             // jeda menjerit: menatap pemain, belum bergerak
                             windupT -= dt;
-                            FaceTo(pl.transform.position, dt * 2f);
+                            FaceTo(canSee ? pl.transform.position : lastSeenPos, dt * 2f);
                             break;
                         }
                         if (!canSee) lost += dt; else lost = 0f;
                         repath -= dt;
                         if (repath <= 0f) { repath = 0.35f; SetPathTo(canSee ? pl.node : lastKnownNode); }
                         float flat = G.Flat(pl.transform.position - transform.position).magnitude;
-                        bool sameNode = L.NodeAt(transform.position) == pl.node;
+                        bool sameNode = !pl.hidden && L.NodeAt(transform.position) == pl.node;
                         if (flat < 3.4f && (canSee || sameNode)) MoveDirect(pl.transform.position, D.chaseSpeed);
                         else if (Follow(D.chaseSpeed) && !canSee) MoveDirect(lastSeenPos, D.chaseSpeed);
                         speed01 = 1f;
@@ -185,7 +181,7 @@ namespace HantuBelajar
                         wanderT -= dt;
                         if (Follow(D.patrolSpeed) || wanderT <= 0f)
                         {
-                            if (stateTime > D.searchTime) { PickPatrol(); break; }
+                            if (stateTime > D.searchTime) { AfterSearch(); break; }
                             WanderNear(lastKnownNode, 2);
                         }
                     }
@@ -195,6 +191,20 @@ namespace HantuBelajar
                     if (inspecting != null) FaceTo(inspecting.transform.position, dt);
                     linger -= dt;
                     if (linger <= 0f) FinishInspect();
+                    break;
+                case GhostState.Jaga:
+                    if (canSee) { guardSpot = null; StartChase(); break; }
+                    if (Follow(D.patrolSpeed))
+                    {
+                        guardT -= dt;
+                        if (guardSpot != null)
+                        {
+                            Vector3 to = G.Flat(guardSpot.exitPos - transform.position);
+                            if (to.sqrMagnitude > 0.01f) FaceTo(transform.position + Quaternion.Euler(0f, Mathf.Sin(Time.time * 0.8f) * 35f, 0f) * to, dt);
+                        }
+                        else LookAround(dt);
+                        if (guardT <= 0f) { guardSpot = null; PickPatrol(); }
+                    }
                     break;
                 case GhostState.Muncul:
                     fadeT += dt;
@@ -230,7 +240,7 @@ namespace HantuBelajar
             if (stuckT > 4f)
             {
                 bool shouldMove = state == GhostState.Kejar || (state != GhostState.Periksa && state != GhostState.Muncul && pathIdx < path.Count);
-                if (shouldMove && (transform.position - stuckPos).magnitude < 0.4f) { SetPathTo(state == GhostState.Kejar ? pl.node : targetNode); if (pathIdx >= path.Count) BeginAppear(); }
+                if (shouldMove && (transform.position - stuckPos).magnitude < 0.4f) { SetPathTo(state == GhostState.Kejar ? lastKnownNode : targetNode); if (pathIdx >= path.Count) BeginAppear(); }
                 stuckPos = transform.position; stuckT = 0f;
             }
 
@@ -288,7 +298,7 @@ namespace HantuBelajar
 
         public void OnPlayerHid(HidingSpot s)
         {
-            if (canSee) { sawHideSpot = s; sawHideT = Time.time; }
+            // sengaja kosong: hantu TIDAK diberi tahu pemain bersembunyi (ia hanya kehilangan pandangan)
         }
 
         // ------------------------------------------------------------------ keputusan
@@ -314,7 +324,7 @@ namespace HantuBelajar
                 int d = L.Dist(dist, s.frontNode);
                 if (d < 0 || d > 6) continue;
                 float theta = GhostMemory.Sample(s);
-                float score = theta * (0.5f + D.learnWeight) - d * 0.07f + (sawEnter && s == sawHideSpot ? 3f : 0f);
+                float score = theta * (0.5f + D.learnWeight) - d * 0.07f;
                 c.Add((score, s, theta, d));
             }
             c.Sort((a, b) => b.Item1.CompareTo(a.Item1));
@@ -338,29 +348,67 @@ namespace HantuBelajar
             checksMade++;
             if (s != null)
             {
-                bool inside = pl.hidden && pl.spot == s;
-                float ch = CheckChance(s);
-                lastCheckChance = ch;
-                if (inside && Random.value < ch)
-                {
-                    GhostMemory.RecordCheck(s, true);
-                    GameManager.I.BeginCatch(this, "Hantu sudah hafal tempat sembunyimu (" + s.KindName + ")!");
-                    return;
-                }
+                // hantu hanya memeriksa dari luar dan tidak pernah menemukan pemain di dalam; menurutnya tempat itu kosong
+                lastCheckChance = GhostMemory.Mean(s);
                 GhostMemory.RecordCheck(s, false);
-                if (inside) GhostMemory.Feed("Hantu memeriksa " + s.KindName + " tempatmu... tapi tidak melihatmu (peluang " + Mathf.RoundToInt(ch * 100f) + "%)");
             }
             SetState(GhostState.Cari, "Lanjut menggeledah");
             if (queue.Count == 0) wanderT = 0f;
         }
 
-        /// <summary>Peluang menemukan pemain di tempat sembunyi = f(E[theta]) x agresivitas DDA (+ bila melihat pemain masuk).</summary>
-        public float CheckChance(HidingSpot s)
+        /// <summary>
+        /// Selesai menggeledah tanpa hasil. Dengan peluang = bobot belajar (DDA), hantu BERJAGA dekat tempat sembunyi yang paling
+        /// dicurigai di sekitar lokasi terakhir pemain (Thompson sampling dari kebiasaan) - bukan karena tahu pemain ada di sana.
+        /// </summary>
+        void AfterSearch()
         {
-            float c = 0.05f + 0.75f * GhostMemory.Mean(s);
-            if (s == sawHideSpot && Time.time - sawHideT < 8f) c += 0.3f;
-            return Mathf.Clamp(c * D.checkMul, 0.05f, 0.92f);
+            if (Random.value < D.learnWeight)
+            {
+                HidingSpot s = PickGuardSpot(searchCenter, 6);
+                if (s != null) { BeginGuard(s, "Curiga kamu bersembunyi di sekitar sini -> berjaga dekat " + s.KindName + " #" + s.id + " (E[theta] = " + GhostMemory.Mean(s).ToString("0.00") + ")"); return; }
+            }
+            PickPatrol();
         }
+
+        HidingSpot PickGuardSpot(Vector3Int around, int radius)
+        {
+            int[] dist = radius > 0 ? L.Distances(around, true, true) : null;
+            HidingSpot best = null; float bs = float.MinValue;
+            foreach (HidingSpot s in H.spots)
+            {
+                int d = dist != null ? L.Dist(dist, s.frontNode) : 0;
+                if (dist != null && (d < 0 || d > radius)) continue;
+                float sc = GhostMemory.Sample(s) - d * 0.03f;
+                if (sc > bs) { bs = sc; best = s; }
+            }
+            return best;
+        }
+
+        void BeginGuard(HidingSpot s, string why)
+        {
+            guardSpot = s; guardT = D.guardTime;
+            SetPathTo(GuardNode(s));
+            SetState(GhostState.Jaga, why);
+        }
+
+        /// <summary>Posisi jaga: 1-2 langkah dari depan tempat sembunyi, di lantai yang sama.</summary>
+        Vector3Int GuardNode(HidingSpot s)
+        {
+            int[] d = L.Distances(s.frontNode, true, true);
+            Vector3Int best = s.frontNode; int bestScore = int.MinValue;
+            for (int i = 0; i < d.Length; i++)
+            {
+                if (d[i] < 1 || d[i] > 2) continue;
+                Vector3Int n = L.FromIdx(i);
+                if (L.Blocked(n) || n.z != s.floor) continue;
+                int score = d[i] * 10 + Random.Range(0, 6);
+                if (score > bestScore) { bestScore = score; best = n; }
+            }
+            return best;
+        }
+
+        /// <summary>Kecurigaan hantu pada tempat ini = E[theta] dari kebiasaan pemain (untuk panel presentasi; hantu tidak pernah menemukan pemain yang bersembunyi).</summary>
+        public float CheckChance(HidingSpot s) { return GhostMemory.Mean(s); }
 
         void PickPatrol(bool towardPlayer = false)
         {
@@ -371,7 +419,13 @@ namespace HantuBelajar
                 SetState(GhostState.Hadang, "Menghadang di jalur favoritmu (" + L.FloorName(amb.z) + ", panas " + (share * 100f).ToString("0") + "%)");
                 return;
             }
-            if (towardPlayer)
+            if (!towardPlayer && Random.value < D.learnWeight * 0.3f)
+            {
+                // berjaga dekat tempat sembunyi favorit (kebiasaan lintas rumah + rumah ini)
+                HidingSpot fav = PickGuardSpot(default, 0);
+                if (fav != null && GhostMemory.Mean(fav) >= 0.45f) { BeginGuard(fav, "Berjaga dekat tempat sembunyi favoritmu: " + fav.KindName + " #" + fav.id + " (E[theta] = " + GhostMemory.Mean(fav).ToString("0.00") + ")"); return; }
+            }
+            if (towardPlayer && !pl.hidden)
             {
                 WanderNear(pl.node, 3);
                 linger = 2f;
@@ -425,7 +479,7 @@ namespace HantuBelajar
 
         void Reappear()
         {
-            int[] d = L.Distances(pl.node, true, true);
+            int[] d = L.Distances(pl.hidden ? lastKnownNode : pl.node, true, true);
             List<Vector3Int> c = new List<Vector3Int>();
             for (int i = 0; i < d.Length; i++)
             {
@@ -466,6 +520,8 @@ namespace HantuBelajar
 
         public void Teleport(Vector3 p) { transform.position = p; lastFramePos = p; path.Clear(); pathIdx = 0; }
         public void ForceChase() { frozen = false; asleep = false; graceUntil = 0f; vis.SetAlpha(1f); StartChase(); }
+        public void GuardForTest(HidingSpot s) { BeginGuard(s, "Uji: berjaga dekat tempat sembunyi"); }
+        public void InspectForTest(HidingSpot s) { queue.Clear(); inspecting = null; queue.Add(s); SetState(GhostState.Cari, "Uji: memeriksa tempat sembunyi tertentu"); }
         public bool Asleep { get { return asleep; } }
 
         // ------------------------------------------------------------------ gerak

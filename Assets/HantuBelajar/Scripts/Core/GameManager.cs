@@ -76,10 +76,19 @@ namespace HantuBelajar
 
         public void StartNew()
         {
+            // pertama kali bermain: tampilkan panduan bermain dulu
+            if (!TestMode && !GuideSeen) { ui.ShowGuide(true, () => { GuideSeen = true; StartNewInternal(); }); return; }
+            StartNewInternal();
+        }
+
+        void StartNewInternal()
+        {
             houseNo = 0; dda.d = 0.4f; dda.Ps = 0.5f; dda.Apply();
             seed = Random.Range(1000, 99999);
             NextHouseInternal();
         }
+
+        public static bool GuideSeen { get { return PlayerPrefs.GetInt("HB_GuideSeen", 0) == 1; } set { PlayerPrefs.SetInt("HB_GuideSeen", value ? 1 : 0); PlayerPrefs.Save(); } }
 
         public void Continue()
         {
@@ -146,9 +155,9 @@ namespace HantuBelajar
             if (!TestMode)
             {
                 ui.SetFade(1f); ui.FadeTo(0f, 0.9f);
-                string extra = (layout.floors > 1 ? "2 lantai" : "1 lantai") + "   -   " + RelicsNeeded + " relik" + (layout.lockedRoom >= 0 ? "   -   ada ruang yang digembok" : "");
-                ui.ShowIntro("RUMAH #" + houseNo + "\n<size=26><color=#b8b0a0>" + extra + "</color></size>", 4f);
+                ui.ShowIntro("RUMAH #" + houseNo, new[] { layout.floors > 1 ? "2 LANTAI" : "1 LANTAI", RelicsNeeded + " RELIK", layout.lockedRoom >= 0 ? "RUANG DIGEMBOK" : null, "KESULITAN " + dda.Label }, 4.2f);
             }
+            ui.hud.BeginHouse(!TestMode && !HUD.TutDone, houseNo == 1);
         }
 
         public void Pause()
@@ -156,6 +165,7 @@ namespace HantuBelajar
             if (state != State.Playing) return;
             state = State.Paused;
             Time.timeScale = 0f; AudioListener.pause = true;
+            ui.hud.map.SetFull(false);
             ui.ShowPause();
             Lock(false);
         }
@@ -242,19 +252,19 @@ namespace HantuBelajar
             relicsFound++;
             dda.OnRelic();
             AudioDirector.I.Pickup();
-            Toast("Relik: " + RelicPickup.Names[r.index % RelicPickup.Names.Length] + " (" + relicsFound + "/" + RelicsNeeded + ")  -  " + RelicPickup.Lore[r.index % RelicPickup.Lore.Length]);
+            Toast("Relik " + relicsFound + " / " + RelicsNeeded + "  ·  " + RelicPickup.Names[r.index % RelicPickup.Names.Length], RelicPickup.Lore[r.index % RelicPickup.Lore.Length]);
             if (relicsFound >= RelicsNeeded)
             {
                 if (house.exit != null) house.exit.SetUnlocked(true);
-                Toast("Semua relik terkumpul! Cari pintu keluar di lantai 1.");
+                Toast("Semua relik terkumpul!", "Pintu keluar terbuka - ikuti kompas ke lantai 1");
             }
         }
-        public void OnKey() { dda.OnProgress(); Toast("Kunci tua didapat. Cari pintu yang digembok."); }
+        public void OnKey() { dda.OnProgress(); Toast("Kunci tua didapat", "Cari pintu yang digembok - ikon gembok ada di peta (M)"); }
         public void OnUnlock()
         {
             layout.lockedKeys.Clear();     // graf jalur pemain kini melewati pintu yang sudah terbuka
             dda.OnProgress();
-            Toast("Gembok terbuka.");
+            Toast("Gembok terbuka");
         }
 
         public void OnWin()
@@ -262,11 +272,10 @@ namespace HantuBelajar
             if (state != State.Playing) return;
             player.ForceUnhide();
             state = State.Won;
-            float before = dda.d;
             dda.OnWin();
             AudioDirector.I.Win();
             endReason = "Kamu berhasil kabur dari rumah #" + houseNo + ".";
-            ui.ShowEnd(true, endReason, Stats(before, true));
+            ui.ShowEnd(true, endReason, Stats(true));
             Lock(false);
             SaveProgress();
         }
@@ -285,29 +294,29 @@ namespace HantuBelajar
 
         void FinishCatch()
         {
-            float before = dda.d;
             dda.OnCaught();
             state = State.Caught;
             player.cam.transform.localPosition = Vector3.zero;
             player.ForceUnhide();
             ghost.frozen = true;
-            ui.ShowEnd(false, endReason, Stats(before, false));
+            ui.ShowEnd(false, endReason, Stats(false));
             Lock(false);
             SaveProgress();
         }
 
-        string Stats(float dBefore, bool won)
+        EndInfo Stats(bool won)
         {
-            int mm = (int)(houseTime / 60f), ss = (int)(houseTime % 60f);
             PcgParams nx = dda.MakePcg(0);
-            string trend = dda.d > dBefore + 0.001f ? "naik" : dda.d < dBefore - 0.001f ? "turun" : "tetap";
-            return "<color=#b8b0a0>Waktu " + mm + ":" + ss.ToString("00") + "   |   Relik " + relicsFound + "/" + RelicsNeeded + "   |   Dikejar " + dda.chasesHouse + "x   |   Sembunyi " + dda.hidesHouse + "x</color>\n\n" +
-                   "<color=#ffcc73>Kesulitan (DDA) " + trend + ": " + Mathf.RoundToInt(dAtStart * 100) + "% -> " + Mathf.RoundToInt(dda.d * 100) + "%  (" + dda.Label + ")</color>\n" +
-                   "<size=22><color=#9a9284>Rumah berikutnya: " + nx.floors + " lantai, " + nx.hidingSpots + " tempat sembunyi, " + nx.batteries + " baterai, " + nx.relicCount + " relik" +
-                   (won ? " - hantu makin peka dan cepat." : " - hantu lebih lambat dan kurang peka.") + "</color></size>";
+            return new EndInfo
+            {
+                time = houseTime, relics = relicsFound, relicsNeed = RelicsNeeded, chases = dda.chasesHouse, hides = dda.hidesHouse,
+                dFrom = dAtStart, dTo = dda.d, label = dda.Label,
+                next = "Rumah berikutnya: " + nx.floors + " lantai  ·  " + nx.hidingSpots + " tempat sembunyi  ·  " + nx.batteries + " baterai  ·  " + nx.relicCount + " relik" +
+                       (dda.d > dAtStart + 0.005f ? "   -   hantu makin peka dan cepat" : dda.d < dAtStart - 0.005f ? "   -   hantu lebih lambat dan kurang peka" : "   -   tingkat kesulitan tetap"),
+            };
         }
 
-        public void Toast(string s) { if (ui != null) ui.hud.Toast(s); }
+        public void Toast(string s, string sub = null) { if (ui != null) ui.hud.Toast(s, sub); }
 
         /// <summary>Uji build (-autoshots): render kamera + UI ke PNG di samping exe.</summary>
         void AutoShot()

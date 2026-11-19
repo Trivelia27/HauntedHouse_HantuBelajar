@@ -62,7 +62,7 @@ namespace HantuBelajar
             Time.timeScale = 1f;
             // jangan tinggalkan jejak uji di PlayerPrefs pemain (memori hantu, petunjuk tutorial)
             GhostMemory.Reset(); GhostMemory.feed.Clear();
-            PlayerPrefs.DeleteKey("HB_Hints"); PlayerPrefs.Save();
+            PlayerPrefs.DeleteKey("HB_HintsShown"); PlayerPrefs.DeleteKey("HB_GuideSeen"); PlayerPrefs.DeleteKey("HB_TutDone"); PlayerPrefs.Save();
 #if UNITY_EDITOR
             UnityEditor.SessionState.SetString("HB_TEST_KIND", "");
             UnityEditor.EditorApplication.Exit(errors.Count > 0 ? 3 : 0);
@@ -198,12 +198,15 @@ namespace HantuBelajar
             Capture("40_ghost_close", p0.cam, true);
             gm.ghost.Teleport(G.W(L.ghostStart));
             // HUD mode presentasi
-            gm.ui.hud.present = true; gm.ui.hud.showDebug = true; gm.ui.hud.showMap = true;
-            yield return Frames(15);
+            gm.ui.hud.present = true; gm.ui.hud.showDebug = true;
+            yield return Real(0.6f);
             Capture("50_hud_presentation", p0.cam, true);
-            gm.ui.hud.present = false; gm.ui.hud.showDebug = false; gm.ui.hud.showMap = false;
-            yield return Frames(5);
+            gm.ui.hud.present = false; gm.ui.hud.showDebug = false;
+            gm.ui.hud.BeginHouse(true, true); yield return Real(0.6f);
             Capture("51_hud_normal", p0.cam, true);
+            gm.ui.hud.map.SetFull(true); yield return Real(0.6f);
+            Capture("52_map_full", p0.cam, true);
+            gm.ui.hud.map.SetFull(false); gm.ui.hud.BeginHouse(false, false); yield return Frames(3);
             // adegan tertangkap (jumpscare) dengan sinematik
             p0.Spawn(G.W(L.start) + Vector3.up * 0.05f, 0f); yield return Frames(3);
             gm.ghost.Teleport(p0.transform.position + p0.transform.forward * 2.5f);
@@ -215,14 +218,18 @@ namespace HantuBelajar
             GameManager.TestMode = true;
             gm.NextHouse(); yield return Frames(10);
             // menu & layar
-            gm.ui.ShowMain(); yield return Frames(5); Capture("60_menu_main", p0.cam, true);
-            gm.ui.ShowSettings(gm.ui.ShowMain); yield return Frames(5); Capture("61_menu_settings", p0.cam, true);
-            gm.ui.ShowHowTo(gm.ui.ShowMain); yield return Frames(5); Capture("62_menu_howto", p0.cam, true);
-            gm.ui.ShowPause(); yield return Frames(5); Capture("63_menu_pause", p0.cam, true);
-            gm.ui.ShowEnd(false, "Hantu sudah hafal tempat sembunyimu (lemari)!", "<color=#b8b0a0>Waktu 3:12   |   Relik 2/3</color>\n\n<color=#ffcc73>Kesulitan (DDA) turun: 52% -> 37%</color>"); yield return Frames(5); Capture("64_end_caught", p0.cam, true);
-            gm.ui.ShowEnd(true, "Kamu berhasil kabur dari rumah #1.", "<color=#ffcc73>Kesulitan (DDA) naik: 40% -> 55%</color>"); yield return Frames(5); Capture("65_end_won", p0.cam, true);
+            gm.ui.ShowMain(); yield return Real(0.5f); Capture("60_menu_main", p0.cam, true);
+            gm.ui.ShowSettings(gm.ui.ShowMain);
+            for (int tb = 0; tb < 4; tb++) { gm.ui.SelectTab(tb); yield return Real(0.4f); Capture("61_settings_tab" + tb, p0.cam, true); }
+            gm.ui.ShowGuide(true, null);
+            for (int pg = 0; pg < 4; pg++) { gm.ui.SetGuidePage(pg); yield return Real(0.4f); Capture("62_guide_" + pg, p0.cam, true); }
+            gm.ui.ShowGame(); gm.ui.ShowPause(); yield return Real(0.6f); Capture("63_menu_pause", p0.cam, true);
+            gm.ui.ShowEnd(false, "Hantu menangkapmu!", new EndInfo { time = 192f, relics = 2, relicsNeed = 3, chases = 3, hides = 2, dFrom = 0.52f, dTo = 0.37f, label = "SEDANG", next = "Rumah berikutnya: 2 lantai  ·  8 tempat sembunyi  ·  3 baterai  ·  3 relik   -   hantu lebih lambat dan kurang peka" });
+            yield return Real(0.5f); Capture("64_end_caught", p0.cam, true);
+            gm.ui.ShowEnd(true, "Kamu berhasil kabur dari rumah #1.", new EndInfo { time = 245f, relics = 3, relicsNeed = 3, chases = 2, hides = 1, dFrom = 0.4f, dTo = 0.55f, label = "SULIT", next = "Rumah berikutnya: 2 lantai  ·  7 tempat sembunyi  ·  2 baterai  ·  3 relik   -   hantu makin peka dan cepat" });
+            yield return Real(0.5f); Capture("65_end_won", p0.cam, true);
             gm.ui.ShowGame();
-            gm.ui.ShowIntro("RUMAH #1\n<size=26><color=#b8b0a0>2 lantai   -   3 relik   -   ada ruang yang digembok</color></size>", 4f); yield return Frames(5); Capture("66_intro", p0.cam, true);
+            gm.ui.ShowIntro("RUMAH #1", new[] { "2 LANTAI", "3 RELIK", "RUANG DIGEMBOK", "KESULITAN SEDANG" }, 4f); yield return Real(0.7f); Capture("66_intro", p0.cam, true);
         }
 
         // ------------------------------------------------------------------ smoke (bot)
@@ -356,13 +363,39 @@ namespace HantuBelajar
         IEnumerator Flow()
         {
             GameManager.TestMode = false;
+            PlayerPrefs.DeleteKey("HB_GuideSeen"); PlayerPrefs.DeleteKey("HB_TutDone");
             gm.ToMenu(); yield return Real(1.2f);
             Check("menu utama tampil", gm.state == GameManager.State.Menu);
             Capture("flow_00_menu", gm.player.cam, true);
-            Check("tombol MULAI BARU ditekan", Click("New")); yield return Real(1.5f);
-            Check("permainan dimulai (rumah #1)", gm.state == GameManager.State.Playing && gm.houseNo == 1);
-            Check("hantu tertidur di awal", gm.ghost.Asleep);
+            Check("tombol MULAI BARU ditekan", Click("New")); yield return Real(0.6f);
+            Check("panduan bermain muncul saat pertama kali main", gm.ui.GuideOpen && gm.state == GameManager.State.Menu);
+            for (int i = 0; i < 4; i++)
+            {
+                Capture("flow_guide_" + i, gm.player.cam, true);
+                Check("panduan halaman " + (i + 1) + ": tombol lanjut", Click("GuideNext")); yield return Real(0.5f);
+            }
+            yield return Real(1.0f);
+            Check("permainan dimulai (rumah #1) setelah panduan", gm.state == GameManager.State.Playing && gm.houseNo == 1 && !gm.ui.GuideOpen);
+            Check("panduan awal (checklist) aktif", gm.ui.hud.TutorialActive);
+            Check("hantu tertidur & menunggu pemain siap", gm.ghost.Asleep && gm.ghost.holdSleep);
             Capture("flow_01_intro", gm.player.cam, true);
+            {
+                // langkah dasar panduan awal: bergerak, senter, peta
+                HouseLayout L0 = gm.layout;
+                int[] d0 = L0.Distances(L0.start, false, false);
+                Vector3Int mv = L0.start;
+                for (int i = 0; i < d0.Length; i++) if (d0[i] == 2 && !L0.Blocked(L0.FromIdx(i))) { mv = L0.FromIdx(i); break; }
+                gm.player.Spawn(G.W(mv) + Vector3.up * 0.05f, 0f); yield return Frames(3);
+                gm.player.ToggleFlash(); yield return Frames(3);
+                gm.ui.hud.map.ToggleFull(); yield return Real(0.6f);
+                Check("peta penuh terbuka (M)", gm.ui.hud.map.fullOpen);
+                Capture("flow_map_full", gm.player.cam, true);
+                gm.ui.hud.map.ToggleFull(); gm.player.ToggleFlash(); yield return Real(0.5f);
+                Check("langkah dasar selesai -> hantu boleh bangun", !gm.ghost.holdSleep);
+                Guidance gd = gm.ui.hud.map.guide;
+                Check("kompas menunjuk tujuan (" + gd.kind + ", " + gd.distance.ToString("0") + " m, " + gd.path.Count + " titik)", gd.kind != Guidance.Kind.None && gd.path.Count >= 2 && gd.distance > 0.5f);
+                Capture("flow_hud_tutorial", gm.player.cam, true);
+            }
             gm.Pause(); yield return Real(0.5f);
             Check("jeda: waktu berhenti", gm.state == GameManager.State.Paused && Time.timeScale == 0f);
             Capture("flow_02_pause", gm.player.cam, true);
@@ -428,9 +461,9 @@ namespace HantuBelajar
             g.Teleport(G.W(far)); g.frozen = true;           // hantu jauh, tidak ada garis pandang
             p.Spawn(spot.exitPos + Vector3.up * 0.05f, 0f); yield return Frames(3);
             p.EnterHide(spot); yield return Real(0.7f);
-            g.frozen = false; yield return Frames(4); g.frozen = true;
+            g.frozen = false; Time.timeScale = 4f; yield return Real(1.5f); Time.timeScale = 1f; g.frozen = true;
             Check("(a) hantu tidak bisa melihat pemain yang bersembunyi", !g.canSee);
-            Check("(b) tanpa melihat pemain masuk, hantu mencari di posisi terakhir pemain terlihat (bukan di lemari)", g.state == GhostState.Cari && g.searchCenter == startNode && g.searchCenter != front);
+            Check("(b) hantu mencari di posisi terakhir pemain terlihat (bukan di lemari)", (g.state == GhostState.Cari || g.state == GhostState.Periksa) && g.searchCenter == startNode && g.searchCenter != front);
             log.AppendLine("     pusat cari " + g.searchCenter + ", depan lemari " + front + ", posisi terakhir terlihat " + startNode);
             // (d) heatmap tidak bertambah selama bersembunyi
             float before = 0f; foreach (float v in GhostMemory.heat) before += v;
@@ -450,7 +483,17 @@ namespace HantuBelajar
             bool sawBefore = g.canSee;
             p.EnterHide(spot); yield return Frames(3);
             Check("hantu melihat pemain sebelum masuk (" + sawBefore + ")", sawBefore);
-            Check("(c) hantu yang melihat pemain masuk langsung memeriksa lemari itu", g.state == GhostState.Cari && g.NextToInspect == spot);
+            Check("(c) walau melihat pemain masuk, hantu tidak langsung menuju lemari itu", g.NextToInspect != spot);
+            Time.timeScale = 4f; yield return Real(5f); Time.timeScale = 1f;
+            Check("(e) pemain yang bersembunyi tidak tertangkap selama 20 dtk hantu bebas bergerak (state " + g.state + ")", gm.state == GameManager.State.Playing && gm.caughtThisHouse == 0);
+            int c0 = g.checksMade;
+            g.InspectForTest(spot); Time.timeScale = 4f; yield return Real(5f); Time.timeScale = 1f;
+            Check("(f) hantu memeriksa lemari yang ditempati tetapi tidak menemukan pemain", g.checksMade > c0 && gm.state == GameManager.State.Playing && p.hidden);
+            // (g) berjaga dekat tempat sembunyi (dari kebiasaan) lalu pergi sendiri - tetap tidak menemukan pemain
+            g.GuardForTest(spot); Time.timeScale = 4f; yield return Real(0.6f); Time.timeScale = 1f;
+            Check("(g) hantu berjaga dekat tempat sembunyi (state " + g.state + ")", g.state == GhostState.Jaga);
+            Time.timeScale = 4f; yield return Real(4.5f); Time.timeScale = 1f;
+            Check("(g) setelah waktu jaga habis hantu pergi, pemain tetap aman (state " + g.state + ")", g.state != GhostState.Jaga && gm.state == GameManager.State.Playing && p.hidden);
             p.ForceUnhide();
         }
 

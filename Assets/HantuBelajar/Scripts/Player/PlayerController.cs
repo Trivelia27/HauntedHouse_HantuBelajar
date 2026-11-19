@@ -10,7 +10,10 @@ namespace HantuBelajar
         public float battery = 100f, stamina = 100f;
         public bool flashOn = true, crouch, running, hidden, moving, hasKey, inputLocked, exhausted;
         public HidingSpot spot;
-        public Camera cam; public Light flash;
+        public Camera cam; public Light flash, spill;
+        public bool focusBeam;
+        const float FlashIntensity = 34f;
+        float focusT, aimDist = 10f; Renderer lensR; Material lensOn, lensOff;
         public float hideTime, noiseLevel;
         public string focusPrompt = "";
         public Interactable focus;
@@ -55,9 +58,14 @@ namespace HantuBelajar
             // senter: rig terpisah yang mengikuti kamera dengan sedikit jeda (terasa dipegang tangan)
             p.flashRig = new GameObject("FlashRig").transform; p.flashRig.SetParent(g.transform, false);
             GameObject fl = new GameObject("Flashlight"); fl.transform.SetParent(p.flashRig, false); fl.transform.localPosition = new Vector3(0.22f, -0.24f, 0.66f);
-            p.flash = fl.AddComponent<Light>(); p.flash.type = LightType.Spot; p.flash.range = 22f; p.flash.spotAngle = 62f; p.flash.innerSpotAngle = 24f;
-            p.flash.intensity = 16f; p.flash.color = new Color(1f, 0.94f, 0.82f); p.flash.shadows = LightShadows.Soft; p.flash.shadowNearPlane = 0.25f; p.flash.shadowStrength = 0.9f;
+            p.flash = fl.AddComponent<Light>(); p.flash.type = LightType.Spot; p.flash.range = 28f; p.flash.spotAngle = 60f; p.flash.innerSpotAngle = 40f;
+            p.flash.intensity = FlashIntensity; p.flash.color = new Color(1f, 0.95f, 0.86f); p.flash.shadows = LightShadows.Soft; p.flash.shadowNearPlane = 0.25f; p.flash.shadowStrength = 0.85f;
+            p.flash.shadowResolution = UnityEngine.Rendering.LightShadowResolution.High;
             p.flash.cookie = Look.FlashCookie;
+            // cahaya sebaran (spill): kerucut lebar & redup di sekitar titik terang, seperti senter sungguhan
+            GameObject sp = new GameObject("FlashSpill"); sp.transform.SetParent(fl.transform, false);
+            p.spill = sp.AddComponent<Light>(); p.spill.type = LightType.Spot; p.spill.range = 14f; p.spill.spotAngle = 120f; p.spill.innerSpotAngle = 70f;
+            p.spill.intensity = 3.2f; p.spill.color = new Color(1f, 0.93f, 0.82f); p.spill.shadows = LightShadows.None;
             p.BuildViewmodel();
             p.steps = g.AddComponent<AudioSource>(); p.steps.loop = true; p.steps.playOnAwake = false; p.steps.spatialBlend = 0f; p.steps.volume = 0f;
             p.steps.clip = AssetLibrary.Clip("footsteps");
@@ -86,6 +94,10 @@ namespace HantuBelajar
             Kit.Prim(PrimitiveType.Capsule, viewmodel, new Vector3(0.0f, -0.035f, -0.04f), new Vector3(0.07f, 0.06f, 0.09f), glove, "Hand", Quaternion.Euler(90f, 0f, 0f));
             Kit.Prim(PrimitiveType.Capsule, viewmodel, new Vector3(0.04f, -0.09f, -0.2f), new Vector3(0.075f, 0.16f, 0.075f), Look.Mat("sleeve", new Color(0.12f, 0.13f, 0.15f), 0.1f), "Sleeve", Quaternion.Euler(70f, 0f, -15f));
             foreach (Renderer r in viewmodel.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            Transform ln = viewmodel.Find("Lens");
+            if (ln != null) lensR = ln.GetComponent<Renderer>();
+            lensOn = Look.Emissive("torchLens", new Color(1f, 0.95f, 0.8f), 2.5f);
+            lensOff = Look.Mat("torchLensOff", new Color(0.16f, 0.16f, 0.15f), 0.85f);
         }
 
         public void ApplySettings()
@@ -116,18 +128,24 @@ namespace HantuBelajar
             if (gm.state == GameManager.State.Catching) { flash.enabled = flashOn && battery > 0f; UpdateAudio(dt, false); return; }   // kamera dikendalikan adegan tertangkap
             bool playing = gm.Playing && !inputLocked;
 
-            // senter
+            // senter: F nyala/mati, tahan klik kanan = fokus (lebih terang & jauh, boros baterai)
             if (playing && !hidden && Input.GetKeyDown(KeyCode.F) && !autopilot) ToggleFlash();
-            if (flashOn && playing) battery = Mathf.Max(0f, battery - gm.dda.gp.batteryDrain * dt);
-            if (battery <= 0f) flashOn = false;
             bool lightOn = flashOn && !hidden && battery > 0f;
-            flash.enabled = lightOn;
-            float k = Mathf.Lerp(0.55f, 1f, Mathf.Clamp01(battery / 40f));
-            if (battery < 15f && Mathf.PerlinNoise(Time.time * 7f, 0.3f) < 0.32f) k *= 0.1f;
-            if (gm.ghost != null && gm.ghost.DistanceTo(transform.position) < 7f && Random.value < 0.06f) flicker = 0.12f;
+            focusBeam = lightOn && playing && !autopilot && Input.GetMouseButton(1);
+            if (flashOn && playing) battery = Mathf.Max(0f, battery - gm.dda.gp.batteryDrain * (focusBeam ? 2.2f : 1f) * dt);
+            if (battery <= 0f) { flashOn = false; lightOn = false; }
+            flash.enabled = lightOn; spill.enabled = lightOn;
+            float k = battery > 20f ? 1f : Mathf.Lerp(0.35f, 1f, battery / 20f);              // baru meredup di bawah 20%
+            if (battery < 8f && Mathf.PerlinNoise(Time.time * 6f, 0.3f) < 0.3f) k *= 0.15f;     // hampir habis: tersendat
+            if (gm.ghost != null && !gm.ghost.frozen && !gm.ghost.Asleep && gm.ghost.DistanceTo(transform.position) < 7f && Random.value < dt * 3f) flicker = 0.12f;
             flicker -= dt;
             if (flicker > 0f) k *= 0.15f;
-            flash.intensity = 16f * k;
+            focusT = Mathf.MoveTowards(focusT, focusBeam ? 1f : 0f, dt * 5f);
+            flash.intensity = Mathf.Lerp(FlashIntensity, FlashIntensity * 1.7f, focusT) * k;
+            flash.spotAngle = Mathf.Lerp(60f, 34f, focusT); flash.innerSpotAngle = Mathf.Lerp(40f, 22f, focusT);
+            flash.range = Mathf.Lerp(28f, 40f, focusT);
+            spill.intensity = Mathf.Lerp(3.2f, 1.2f, focusT) * k;
+            if (lensR != null) lensR.sharedMaterial = lightOn ? lensOn : lensOff;
             viewmodel.gameObject.SetActive(!hidden && gm.state != GameManager.State.Menu);
 
             if (transitioning) { UpdateAudio(dt, false); return; }
@@ -260,6 +278,12 @@ namespace HantuBelajar
             Transform c = cam.transform;
             flashRig.position = c.position;
             flashRig.rotation = Quaternion.Slerp(flashRig.rotation, c.rotation, 1f - Mathf.Exp(-dt * 14f));
+            // sinar diarahkan ke titik bidik (titik terang tepat di tengah layar), tetap sedikit tertinggal saat menoleh
+            float aim = 18f;
+            if (Physics.Raycast(c.position, flashRig.forward, out RaycastHit ah, 30f, ~(1 << 2), QueryTriggerInteraction.Ignore)) aim = Mathf.Max(2f, ah.distance);
+            aimDist = Mathf.Lerp(aimDist, aim, 1f - Mathf.Exp(-dt * 10f));
+            Vector3 aimPt = c.position + flashRig.forward * aimDist;
+            flash.transform.rotation = Quaternion.LookRotation(aimPt - flash.transform.position, flashRig.up);
             viewmodel.localPosition = new Vector3(0.23f + swayX * 0.004f, -0.25f + swayY * 0.004f + Mathf.Sin(bob) * 0.006f, 0.38f);
             viewmodel.localRotation = Quaternion.Inverse(c.rotation) * flashRig.rotation * Quaternion.Euler(4f + swayY * 0.4f, -9f + swayX * 0.4f, -6f);
         }

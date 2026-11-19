@@ -29,7 +29,7 @@ namespace HantuBelajar
         public void Apply()
         {
             patrolSpeed = Mathf.Lerp(1.5f, 2.6f, d);
-            chaseSpeed = Mathf.Lerp(3.0f, 5.0f, d);
+            chaseSpeed = Mathf.Lerp(3.6f, 5.4f, d);
             visionRange = Mathf.Lerp(7f, 15f, d);
             fov = Mathf.Lerp(70f, 115f, d);
             hearingMult = Mathf.Lerp(0.6f, 1.4f, d);

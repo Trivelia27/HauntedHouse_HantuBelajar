@@ -84,7 +84,7 @@ namespace HantuBelajar
             if (Input.GetKeyDown(KeyCode.F2)) { dda.Force(-0.15f); Toast("DDA: kesulitan turun -> " + dda.Label); }
             if (Input.GetKeyDown(KeyCode.F3)) { dda.Force(+0.15f); Toast("DDA: kesulitan naik -> " + dda.Label); }
             if (Input.GetKeyDown(KeyCode.F5)) { ghost.frozen = !ghost.frozen; Toast(ghost.frozen ? "Hantu dibekukan (demo)" : "Hantu aktif lagi"); }
-            if (Input.GetKeyDown(KeyCode.F6)) { ghost.transform.position = player.transform.position + player.transform.forward * 6f; ghost.HearNoise(player.transform.position, 99f); Toast("Demo: hantu dipanggil"); }
+            if (Input.GetKeyDown(KeyCode.F6) && Playing && !player.hidden) { ghost.SummonAndChase(3); Toast("Demo: hantu dipanggil dan mengejar!"); }
             if (Input.GetKeyDown(KeyCode.F9)) { GhostMemory.Reset(); Toast("Memori hantu direset"); }
         }
 

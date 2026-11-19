@@ -92,7 +92,7 @@ namespace HantuBelajar
         public float lastCheckChance;
         HouseLayout L; HouseInstance H; PlayerController pl;
         int pathIdx; float repath, lost, linger, sawHideT = -99f;
-        Vector2Int lastKnown; HidingSpot sawHideSpot;
+        Vector2Int lastKnown; HidingSpot sawHideSpot; Vector3 lastSeenPos;
         readonly List<HidingSpot> searchQueue = new List<HidingSpot>();
         System.Random rng = new System.Random();
         GhostVisual vis; AudioSource voice;
@@ -163,12 +163,13 @@ namespace HantuBelajar
                         BeginSearch(G.C(pl.spot.ExitPos), "Pemain hilang dari pandangan saat dikejar");
                         break;
                     }
-                    if (canSee) { lost = 0f; lastKnown = pl.Cell; } else lost += dt;
+                    if (canSee) { lost = 0f; lastKnown = pl.Cell; lastSeenPos = pl.transform.position; } else lost += dt;
                     repath -= dt;
                     if (repath <= 0f) { repath = 0.35f; SetPath(lastKnown); }
                     float dist = Flat(pl.transform.position - transform.position).magnitude;
-                    if (canSee && dist < 3.2f) MoveDirect(pl.transform.position, D.chaseSpeed);
-                    else FollowPath(D.chaseSpeed);
+                    Vector2Int myCell = G.C(transform.position);
+                    if (dist < 3.2f && (canSee || myCell == pl.Cell)) MoveDirect(pl.transform.position, D.chaseSpeed);
+                    else if (FollowPath(D.chaseSpeed)) MoveDirect(lastSeenPos, D.chaseSpeed);
                     if (dist < 1.25f && !pl.hidden) { GameManager.I.OnCaught("Hantu menangkapmu!"); return; }
                     if (lost > D.loseTime) BeginSearch(lastKnown, "Kehilangan jejak - cari di posisi terakhir");
                     break;
@@ -242,9 +243,11 @@ namespace HantuBelajar
             if (L == null || state == GhostState.Kejar || state == GhostState.Periksa) return;
             float r = radius * D.hearingMult;
             if (Flat(pos - transform.position).magnitude > r) return;
-            lastKnown = G.C(pos);
-            if (!L.In(lastKnown)) return;
-            SetPath(lastKnown);
+            Vector2Int heard = G.C(pos);
+            if (!L.In(heard)) return;
+            bool same = state == GhostState.Selidiki && heard == lastKnown;
+            lastKnown = heard;
+            if (!same) SetPath(lastKnown);
             linger = 1.8f;
             SetState(GhostState.Selidiki, "Mendengar langkah kaki (radius " + r.ToString("0.0") + " m)");
             GameManager.I.Toast("Hantu mendengar sesuatu...");
@@ -258,6 +261,25 @@ namespace HantuBelajar
         }
         public void Teleport(Vector3 p) { transform.position = new Vector3(p.x, 0, p.z); path.Clear(); }
 
+        /// <summary>Demo (F6): hantu muncul di sel yang bisa dijangkau sekitar n langkah dari pemain lalu langsung mengejar.</summary>
+        public void SummonAndChase(int n)
+        {
+            int[,] dist = L.Distances(pl.Cell);
+            Vector2Int best = L.ghostStart; int bd = int.MaxValue;
+            for (int x = 0; x < L.w; x++)
+                for (int y = 0; y < L.h; y++)
+                {
+                    int d = dist[x, y];
+                    if (d < 0 || L.blocked[x, y]) continue;
+                    int score = Mathf.Abs(d - n);
+                    if (score < bd) { bd = score; best = new Vector2Int(x, y); }
+                }
+            Teleport(G.W(best));
+            Vector3 look = pl.transform.position - transform.position; look.y = 0;
+            if (look.sqrMagnitude > 0.01f) transform.rotation = Quaternion.LookRotation(look);
+            ForceChase();
+        }
+
         public void OnPlayerHid(HidingSpot s)
         {
             if (canSee || state == GhostState.Kejar) { sawHideSpot = s; sawHideT = Time.time; }
@@ -266,7 +288,7 @@ namespace HantuBelajar
         void StartChase()
         {
             if (state != GhostState.Kejar) { AudioDirector.I.Scare(); GameManager.I.dda.OnChaseStart(); }
-            lastKnown = pl.Cell; lost = 0f; repath = 0f;
+            lastKnown = pl.Cell; lastSeenPos = pl.transform.position; lost = 0f; repath = 0f;
             SetState(GhostState.Kejar, "Melihat pemain -> KEJAR");
         }
 
@@ -314,7 +336,8 @@ namespace HantuBelajar
                 for (int k = 0; k < 4; k++) { Vector2Int n = from + G.Dirs[k]; if (L.In(n) && !L.blocked[n.x, n.y]) { from = n; break; } }
             }
             path = L.Path(from, target);
-            pathIdx = 0;
+            // sel pertama = sel tempat hantu berdiri; dilewati agar hantu tidak mundur ke tengah sel tiap kali jalur dihitung ulang
+            pathIdx = path.Count > 1 ? 1 : 0;
         }
 
         /// <summary>true bila sudah sampai ujung jalur.</summary>

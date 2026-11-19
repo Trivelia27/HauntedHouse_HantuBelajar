@@ -201,7 +201,7 @@ namespace HantuBelajar
                     break;
                 case State.Playing:
                     houseTime += Time.deltaTime;
-                    GhostMemory.RecordPos(layout, player.node, Time.deltaTime);
+                    if (!player.hidden) GhostMemory.RecordPos(layout, player.node, Time.deltaTime);   // jalur yang dilalui, bukan tempat diam bersembunyi
                     if (Input.GetKeyDown(KeyCode.Escape) && !TestMode) { Pause(); break; }
                     if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked && !TestMode) Lock(true);
                     DevKeys();

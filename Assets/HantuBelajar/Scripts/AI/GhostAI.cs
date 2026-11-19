@@ -141,7 +141,8 @@ namespace HantuBelajar
                         if (pl.hidden)
                         {
                             bool saw = pl.spot != null && (Time.time - sawHideT < 1.5f);
-                            BeginSearch(pl.spot != null ? pl.spot.frontNode : lastKnownNode, saw ? "Melihatmu masuk ke " + pl.spot.KindName + "!" : "Pemain hilang dari pandangan", saw);
+                            // hanya tahu lokasi tempat sembunyi bila MELIHAT pemain masuk; selain itu cari di posisi terakhir pemain terlihat
+                            BeginSearch(saw ? pl.spot.frontNode : lastKnownNode, saw ? "Melihatmu masuk ke " + pl.spot.KindName + "!" : "Pemain hilang dari pandangan", saw);
                             break;
                         }
                         if (windupT > 0f)
@@ -299,9 +300,13 @@ namespace HantuBelajar
         }
 
         /// <summary>Pilih tempat sembunyi untuk diperiksa: Thompson sampling theta~Beta(alfa,beta), dikurangi jarak.</summary>
+        public Vector3Int searchCenter;
+        public HidingSpot NextToInspect { get { return inspecting != null ? inspecting : (queue.Count > 0 ? queue[0] : null); } }
+
         void BeginSearch(Vector3Int around, string why, bool sawEnter)
         {
             queue.Clear(); inspecting = null;
+            searchCenter = around;
             int[] dist = L.Distances(around, true, true);
             List<(float, HidingSpot, float, float)> c = new List<(float, HidingSpot, float, float)>();
             foreach (HidingSpot s in H.spots)

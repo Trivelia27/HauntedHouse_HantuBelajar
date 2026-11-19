@@ -46,6 +46,7 @@ namespace HantuBelajar
                 case "dda": yield return DdaExperiment(int.Parse(env("HB_HOUSES", "4")), float.Parse(env("HB_SCALE", "4"), CI)); break;
                 case "chase": yield return Chase(); break;
                 case "flow": yield return Flow(); break;
+                case "hide": yield return HideTest(); break;
             }
             Finish();
         }
@@ -407,6 +408,50 @@ namespace HantuBelajar
             Check("lanjutkan memulai rumah berikutnya", gm.state == GameManager.State.Playing && gm.houseNo >= 3);
             GameManager.TestMode = true;
             PlayerPrefs.DeleteKey("HB_SaveHouse"); PlayerPrefs.DeleteKey("HB_SaveD"); PlayerPrefs.DeleteKey("HB_SaveSeed");
+        }
+
+        // ------------------------------------------------------------------ uji: apakah hantu tahu pemain bersembunyi?
+        IEnumerator HideTest()
+        {
+            HouseLayout L = gm.layout;
+            PlayerController p = gm.player; GhostAI g = gm.ghost;
+            HidingSpot spot = gm.house.spots.Find(s => s.kind == SpotKind.Lemari) ?? gm.house.spots[0];
+            Vector3Int front = spot.frontNode;
+            // (b) dikejar, lalu lari ke tempat sembunyi di luar pandangan hantu
+            int[] dist = L.Distances(front, false, true);
+            Vector3Int startNode = front;
+            for (int i = 0; i < dist.Length; i++) if (dist[i] >= 3 && dist[i] <= 5 && !L.Blocked(L.FromIdx(i))) { startNode = L.FromIdx(i); break; }
+            p.Spawn(G.W(startNode) + Vector3.up * 0.05f, 0f); yield return Frames(3);
+            g.ForceChase(); yield return Frames(2);           // hantu "melihat" pemain di startNode (posisi terakhir terlihat)
+            Vector3Int far = L.ghostStart; int fd = -1; int[] dg = L.Distances(front, true, true);
+            for (int i = 0; i < dg.Length; i++) if (dg[i] > fd && !L.Blocked(L.FromIdx(i))) { fd = dg[i]; far = L.FromIdx(i); }
+            g.Teleport(G.W(far)); g.frozen = true;           // hantu jauh, tidak ada garis pandang
+            p.Spawn(spot.exitPos + Vector3.up * 0.05f, 0f); yield return Frames(3);
+            p.EnterHide(spot); yield return Real(0.7f);
+            g.frozen = false; yield return Frames(4); g.frozen = true;
+            Check("(a) hantu tidak bisa melihat pemain yang bersembunyi", !g.canSee);
+            Check("(b) tanpa melihat pemain masuk, hantu mencari di posisi terakhir pemain terlihat (bukan di lemari)", g.state == GhostState.Cari && g.searchCenter == startNode && g.searchCenter != front);
+            log.AppendLine("     pusat cari " + g.searchCenter + ", depan lemari " + front + ", posisi terakhir terlihat " + startNode);
+            // (d) heatmap tidak bertambah selama bersembunyi
+            float before = 0f; foreach (float v in GhostMemory.heat) before += v;
+            yield return Real(1.0f);
+            float after = 0f; foreach (float v in GhostMemory.heat) after += v;
+            Check("(d) heatmap jalur tidak bertambah selama bersembunyi", Mathf.Abs(after - before) < 0.05f);
+            p.ExitHide(); yield return Real(0.8f);
+            // (c) hantu melihat pemain masuk lemari -> lemari itu diperiksa pertama
+            gm.NextHouse(); yield return Frames(5);
+            L = gm.layout; p = gm.player; g = gm.ghost;
+            spot = gm.house.spots.Find(s => s.kind == SpotKind.Lemari) ?? gm.house.spots[0];
+            p.Spawn(spot.exitPos + Vector3.up * 0.05f, 0f); yield return Frames(3);
+            Vector3 toward = G.Flat(spot.exitPos - spot.transform.position).normalized;
+            g.Teleport(spot.exitPos + toward * 1.4f);
+            g.transform.rotation = Quaternion.LookRotation(-toward);
+            g.ForceChase(); yield return Frames(3);
+            bool sawBefore = g.canSee;
+            p.EnterHide(spot); yield return Frames(3);
+            Check("hantu melihat pemain sebelum masuk (" + sawBefore + ")", sawBefore);
+            Check("(c) hantu yang melihat pemain masuk langsung memeriksa lemari itu", g.state == GhostState.Cari && g.NextToInspect == spot);
+            p.ForceUnhide();
         }
 
         // ------------------------------------------------------------------ uji kejar

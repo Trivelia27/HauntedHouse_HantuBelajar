@@ -14,6 +14,7 @@ namespace HantuBelajar.EditorTools
         [MenuItem("Tools/Hantu Belajar/Uji/Eksperimen DDA")] public static void RunDda() { Run("dda"); }
         [MenuItem("Tools/Hantu Belajar/Uji/Uji kejar hantu")] public static void RunChase() { Run("chase"); }
         [MenuItem("Tools/Hantu Belajar/Uji/Alur pemain (menu-main-menang)")] public static void RunFlow() { Run("flow"); }
+        [MenuItem("Tools/Hantu Belajar/Uji/Apakah hantu tahu pemain bersembunyi")] public static void RunHide() { Run("hide"); }
 
         static void Run(string kind)
         {

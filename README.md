@@ -34,7 +34,7 @@ Pengaturan URP dari paket Stealth Game dibuat dengan URP yang lebih baru; pengat
 | F5 / F6 / F9 | bekukan hantu / panggil hantu mengejar / hapus memori hantu |
 
 ## Antarmuka & panduan (`Scripts/UI`)
-- **Menu utama** dengan kartu *Memori Hantu* (berapa kali kamu bersembunyi & tempat favoritmu), **pengaturan bertab** (Kontrol, Grafis, Audio, Gameplay), layar jeda dengan **denah rumah**, layar akhir dengan statistik dan perubahan kesulitan DDA.
+- **Menu utama** dengan kartu *Memori Hantu* (berapa kali kamu bersembunyi & tempat favoritmu), **pengaturan bertab** (Kontrol, Grafis, Audio, Gameplay), layar jeda dengan **denah rumah**, layar akhir dengan statistik dan perubahan kesulitan DDA, serta tombol **UJI COBA PEMAIN** (mode penelitian, lihat di bawah).
 - **Panduan bermain** 4 halaman (tujuan, kontrol, sifat hantu, petunjuk arah) otomatis muncul saat pertama kali bermain; bisa dibuka lagi dari menu / jeda.
 - **Panduan awal** (checklist) di rumah pertama: bergerak, senter, peta, ambil relik, bersembunyi. Hantu tetap tidur sampai langkah dasar selesai.
 - **Kompas** di atas layar menunjuk tujuan berikutnya (relik terdekat -> kunci -> gembok -> pintu keluar) mengikuti jalur **A\*** rumah (lewat pintu & tangga), lengkap dengan jarak dan tanda naik/turun tangga; baterai ditandai saat senter hampir habis.
@@ -73,9 +73,24 @@ Tangan hanya memegang senter di depan saat senter dipakai: dimatikan (F), batera
 ### Dynamic Difficulty Adjustment (`Scripts/DDA`)
 - `DDAManager`: indikator tiap 8 detik (tempo relik dibanding jadwal, waktu dikejar, baterai, waktu sembunyi, nyaris tertangkap) -> skor **P** -> dihaluskan (EMA) -> `d += (P - 0,62) x 0,1`, dibatasi +0,15 / -0,3 per rumah. Event: tertangkap -0,15, relik +0,03, lolos +0,08. Evaluasi berhenti saat jeda atau hantu dibekukan.
 - `DdaMap`: d -> parameter hantu (kecepatan, pandang, dengar, lama mencari, bobot belajar, lama berjaga, eksplorasi), pengurasan baterai senter, dan parameter PCG rumah berikutnya (jumlah lantai, ukuran, tempat sembunyi, baterai, relik, ruang terkunci, jarak relik-tempat sembunyi, proporsi lampu menyala).
-- Eksperimen bot (Pro / Sedang / Lemah, dengan vs tanpa DDA): `Hasil_Eksperimen_DDA.md`.
+- Eksperimen bot (Pro / Sedang / Lemah, dengan vs tanpa DDA, 192 rumah): `Hasil_Eksperimen_DDA.md` - ringkasan di bagian Penelitian.
 
 Alur integrasi: Performa Pemain -> DDA -> parameter Game AI + parameter PCG -> perubahan gameplay, ditambah memori belajar hantu sebagai adaptasi jangka panjang.
+
+## Penelitian (`Scripts/Research`)
+Tiga alat untuk membuktikan bahwa DDA dan hantu yang belajar benar-benar bekerja:
+
+1. **Uji coba pemain** (Menu Utama -> **UJI COBA PEMAIN**) untuk 8-12 peserta. Desain *within-subject*: tiap peserta bermain latihan (dengan panduan awal) lalu **Sesi A** dan **Sesi B** (8 menit), satu memakai DDA dan satu kesulitan tetap. Urutan diseimbangkan otomatis (nomor ganjil DDA dulu) dan disamarkan sebagai "Sesi A/B". Seed rumah, kesulitan awal, dan memori hantu disamakan. Setelah tiap sesi ada kuesioner 8 butir (seru, tegang, kesulitan pas, tingkat kesulitan, frustrasi, mampu, hantu adaptif, ingin main lagi), di akhir ada 3 pertanyaan perbandingan. Semua tercatat otomatis ke `DataUjiCoba/Pxx/` (`rumah.csv`, `kejadian.csv`, `belajar.csv`, `kuesioner.csv`, `perbandingan.csv`, `info.txt`). Simpanan dan memori hantu pemilik komputer dicadangkan lalu dikembalikan. Analisis: **Tools > Hantu Belajar > Analisis Data Uji Coba** -> `Hasil_Uji_Coba.md` (Wilcoxon berpasangan, uji binomial, McNemar, selang 95%, grafik). Panduan lengkap: [`PROTOKOL_UJI_COBA.md`](PROTOKOL_UJI_COBA.md).
+2. **Eksperimen DDA** (bot, 3 profil x DDA/Tetap x 4 replikasi x 8 rumah = 192 rumah, seed berpasangan) -> [`Hasil_Eksperimen_DDA.md`](Hasil_Eksperimen_DDA.md):
+   - DDA menaikkan tingkat lolos Pro 22% -> 63% (Fisher p = 0,002), Sedang 28% -> 41% (p = 0,43), Lemah 3% -> 13% (p = 0,36).
+   - Kesulitan akhir mengikuti keterampilan: Pro 0,41, Sedang 0,30, Lemah 0,20 (semua mulai 0,40).
+   - Temuan jujur: jarak indikator **P** ke target 0,62 tidak membaik (p = 0,91) karena P rata-rata rumah yang berakhir tertangkap tidak lebih rendah daripada yang lolos - penangkapan terjadi tiba-tiba setelah jendela evaluasi yang tenang. DDA tetap bekerja lewat kejadian tertangkap/lolos; perbaikan P disarankan di laporan.
+3. **Eksperimen hantu belajar** (bot berkebiasaan 85% memilih lemari vs bot acak, 10 replikasi x 6 rumah, d = 0,60) -> [`Hasil_Eksperimen_Belajar.md`](Hasil_Eksperimen_Belajar.md). Setiap keputusan hantu yang memakai memori dibandingkan dengan pilihan **acak** pada lintasan pemain yang sama (`LearningProbe`, kontrafaktual):
+   - Prediksi tempat sembunyi: keunggulan atas acak +0,107 pada pemain berkebiasaan vs +0,041 pada pemain acak (2,6x, Mann-Whitney p < 0,001).
+   - **Jaga** tepat 65% vs acak 49% (McNemar p = 0,020) hanya pada pemain berkebiasaan; pada pemain acak tidak berbeda.
+   - **Hadang** (belajar dari jalur) tepat 41% vs acak 27% (gabungan, p = 0,010).
+
+Grafik SVG ada di `Analisis/`. Statistik dihitung di C# tanpa pustaka luar (`Stats`: selang Wilson & t, Fisher eksak, Mann-Whitney, Wilcoxon eksak/normal, McNemar eksak, binomial, bootstrap). Bot `AutoPilot` memakai profil keterampilan (persepsi, waktu reaksi, keputusan) dengan navigasi dan penghindar perabot yang sama untuk semua profil.
 
 ## Pengujian otomatis (Tools > Hantu Belajar > Uji)
 - **Screenshot visual** -> `TestOutput/shots/` (semua layar menu, HUD, peta, panduan)
@@ -84,7 +99,11 @@ Alur integrasi: Performa Pemain -> DDA -> parameter Game AI + parameter PCG -> p
 - **Informasi HUD** -> 17 cek: indikator hantu stabil walau hantu mendengar berkali-kali, tidak ada notifikasi berulang, pesan relik tidak terpotong, notifikasi ditahan saat judul rumah / peta penuh, tidak ada panel yang saling menutupi pada layar 16:9 & 16:10 (termasuk mode presentasi); screenshot di `TestOutput/shots/hud/`
 - **Kerapian tangga** -> 30 rumah: tidak ada benda di ruang lubang tangga, kamera pemain tidak menembus apa pun saat naik, pemain bisa naik/turun di 3 lajur; render sudut pandang pemain + potongan samping + denah di `TestOutput/shots/stairs/`
 - **Bot bermain (smoke)** -> `TestOutput/report_smoke.txt` (error, macet, posisi di luar batas)
-- **Eksperimen DDA** -> `Hasil_Eksperimen_DDA.md`
+- **Eksperimen DDA** -> `Hasil_Eksperimen_DDA.md` + `Analisis/dda_*.svg` (env `HB_REPS`, `HB_HOUSES`, `HB_SCALE`, `HB_PROFILES`; bisa per potongan dengan `HB_REP_FROM`/`HB_REP_TO`, data digabung dari `TestOutput/dda_rows/`)
+- **Eksperimen hantu belajar** -> `Hasil_Eksperimen_Belajar.md` + `Analisis/belajar_*.svg`
+- **Kalibrasi keterampilan bot** -> `TestOutput/kalibrasi_bot.txt` (urutan Pro / Sedang / Lemah tanpa DDA, jejak pengejaran)
+- **Uji coba pemain (peserta simulasi)** -> 28 cek: bot menjalani seluruh alur uji coba lewat tombol UI (pengaturan, panduan, latihan, sesi A/B, kuesioner, perbandingan), urutan seimbang, CSV lengkap, simpanan pemilik dikembalikan, laporan analisis berlabel SIMULASI
+- **Susun ulang laporan eksperimen** -> menulis ulang kedua laporan dari data mentah tersimpan tanpa memainkan ulang
 - **Eksperimen PCG** -> `Hasil_Eksperimen_PCG.md`
 
 ## Kredit aset

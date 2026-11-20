@@ -335,6 +335,7 @@ namespace HantuBelajar
         public void EnterHide(HidingSpot s)
         {
             if (hidden || transitioning || s == null || s.occupied) return;
+            LearningProbe.OnHide(GameManager.I.layout, GameManager.I.house, s);    // prediksi model dihitung sebelum kebiasaan ini dicatat
             spot = s; s.occupied = true; hidden = true; hideTime = 0f;
             s.usesThisHouse++;
             GameManager.I.ghost.OnPlayerHid(s);
@@ -351,6 +352,7 @@ namespace HantuBelajar
             if (!hidden || transitioning) return;
             HidingSpot s = spot;
             if (s != null) GhostMemory.RecordHide(s);   // kebiasaan dicatat setelah keluar (hantu tidak "tahu" lokasi saat ini)
+            Telemetry.Event("keluar_sembunyi", s != null ? s.KindName : "");
             Vector3 outPos = s != null ? s.exitPos : transform.position;
             Vector3 look = s != null ? s.insideRot * Vector3.forward : transform.forward;
             float outYaw = Mathf.Atan2(look.x, look.z) * Mathf.Rad2Deg;

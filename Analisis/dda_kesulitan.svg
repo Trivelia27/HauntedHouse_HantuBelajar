@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="Kesulitan d selama bermain (kondisi DDA)">
+<rect x="0.5" y="0.5" width="759" height="419" rx="10" fill="#fcfcfb" stroke="#e2e1dc"/>
+<text x="24" y="32" font-size="16" font-weight="600" fill="#0b0b0b">Kesulitan d selama bermain (kondisi DDA)</text>
+<text x="24" y="52" font-size="12" fill="#52514e">rata-rata 4 replikasi; mulai 0,40; tanpa DDA tetap 0,40</text>
+<text x="703" y="68" font-size="12" fill="#52514e">Lemah</text>
+<line x1="681" y1="64" x2="697" y2="64" stroke="#1baf7a" stroke-width="2" stroke-linecap="round"/>
+<text x="623.4" y="68" font-size="12" fill="#52514e">Sedang</text>
+<line x1="601.4" y1="64" x2="617.4" y2="64" stroke="#eb6834" stroke-width="2" stroke-linecap="round"/>
+<text x="563.6" y="68" font-size="12" fill="#52514e">Pro</text>
+<line x1="541.6" y1="64" x2="557.6" y2="64" stroke="#2a78d6" stroke-width="2" stroke-linecap="round"/>
+<line x1="64" x2="660" y1="352" y2="352" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="356" font-size="12" text-anchor="end" fill="#52514e">0,0</text>
+<line x1="64" x2="660" y1="297.6" y2="297.6" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="301.6" font-size="12" text-anchor="end" fill="#52514e">0,2</text>
+<line x1="64" x2="660" y1="243.2" y2="243.2" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="247.2" font-size="12" text-anchor="end" fill="#52514e">0,4</text>
+<line x1="64" x2="660" y1="188.8" y2="188.8" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="192.8" font-size="12" text-anchor="end" fill="#52514e">0,6</text>
+<line x1="64" x2="660" y1="134.4" y2="134.4" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="138.4" font-size="12" text-anchor="end" fill="#52514e">0,8</text>
+<line x1="64" x2="660" y1="80" y2="80" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="84" font-size="12" text-anchor="end" fill="#52514e">1,0</text>
+<text x="64" y="372" font-size="12" text-anchor="middle" fill="#52514e">0</text>
+<text x="138.5" y="372" font-size="12" text-anchor="middle" fill="#52514e">1</text>
+<text x="213" y="372" font-size="12" text-anchor="middle" fill="#52514e">2</text>
+<text x="287.5" y="372" font-size="12" text-anchor="middle" fill="#52514e">3</text>
+<text x="362" y="372" font-size="12" text-anchor="middle" fill="#52514e">4</text>
+<text x="436.5" y="372" font-size="12" text-anchor="middle" fill="#52514e">5</text>
+<text x="511" y="372" font-size="12" text-anchor="middle" fill="#52514e">6</text>
+<text x="585.5" y="372" font-size="12" text-anchor="middle" fill="#52514e">7</text>
+<text x="660" y="372" font-size="12" text-anchor="middle" fill="#52514e">8</text>
+<text x="362" y="394" font-size="12" text-anchor="middle" fill="#52514e">setelah rumah ke-</text>
+<line x1="64" x2="660" y1="352" y2="352" stroke="#52514e" stroke-width="1"/>
+<line x1="64" x2="660" y1="243.2" y2="243.2" stroke="#8a8984" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="670" y="247.2" font-size="11" font-style="italic" fill="#52514e">Tetap = 0,40</text>
+<polygon points="64,243.2 138.5,156 213,282.31 287.5,235.93 362,146.13 436.5,235.02 511,168.53 585.5,183.09 660,142.92 660,336.13 585.5,327.65 511,283.46 436.5,333.93 362,352 287.5,281.75 213,342.94 138.5,352 64,243.2" fill="#2a78d6" fill-opacity="0.07"/>
+<polyline points="64,243.2 138.5,266.32 213,312.63 287.5,258.84 362,268.56 436.5,284.48 511,226 585.5,255.37 660,239.53" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="64" cy="243.2" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Pro - setelah rumah ke- 0: 0,4</title></circle>
+<circle cx="138.5" cy="266.32" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Pro - setelah rumah ke- 1: 0,3</title></circle>
+<circle cx="213" cy="312.63" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Pro - setelah rumah ke- 2: 0,1</title></circle>
+<circle cx="287.5" cy="258.84" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Pro - setelah rumah ke- 3: 0,3</title></circle>
+<circle cx="362" cy="268.56" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Pro - setelah rumah ke- 4: 0,3</title></circle>
+<circle cx="436.5" cy="284.48" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Pro - setelah rumah ke- 5: 0,2</title></circle>
+<circle cx="511" cy="226" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Pro - setelah rumah ke- 6: 0,5</title></circle>
+<circle cx="585.5" cy="255.37" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Pro - setelah rumah ke- 7: 0,4</title></circle>
+<circle cx="660" cy="239.53" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Pro - setelah rumah ke- 8: 0,4</title></circle>
+<text x="670" y="233.2" font-size="12" fill="#52514e">Pro</text>
+<polygon points="64,243.2 138.5,241.46 213,215.3 287.5,227.48 362,212.88 436.5,217.81 511,219.36 585.5,262.75 660,230.37 660,310.97 585.5,352 511,344.96 436.5,345.43 362,352 287.5,323.11 213,349.98 138.5,352 64,243.2" fill="#eb6834" fill-opacity="0.07"/>
+<polyline points="64,243.2 138.5,306.78 213,282.64 287.5,275.3 362,287.6 436.5,281.62 511,282.16 585.5,312.42 660,270.67" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="64" cy="243.2" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Sedang - setelah rumah ke- 0: 0,4</title></circle>
+<circle cx="138.5" cy="306.78" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Sedang - setelah rumah ke- 1: 0,2</title></circle>
+<circle cx="213" cy="282.64" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Sedang - setelah rumah ke- 2: 0,3</title></circle>
+<circle cx="287.5" cy="275.3" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Sedang - setelah rumah ke- 3: 0,3</title></circle>
+<circle cx="362" cy="287.6" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Sedang - setelah rumah ke- 4: 0,2</title></circle>
+<circle cx="436.5" cy="281.62" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Sedang - setelah rumah ke- 5: 0,3</title></circle>
+<circle cx="511" cy="282.16" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Sedang - setelah rumah ke- 6: 0,3</title></circle>
+<circle cx="585.5" cy="312.42" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Sedang - setelah rumah ke- 7: 0,1</title></circle>
+<circle cx="660" cy="270.67" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Sedang - setelah rumah ke- 8: 0,3</title></circle>
+<text x="670" y="274.67" font-size="12" fill="#52514e">Sedang</text>
+<polygon points="64,243.2 138.5,240.05 213,242.46 287.5,263.25 362,231.24 436.5,258.44 511,264.82 585.5,271.01 660,254.39 660,341.22 585.5,317.53 511,287.68 436.5,286.44 362,352 287.5,313.18 213,285.14 138.5,280.08 64,243.2" fill="#1baf7a" fill-opacity="0.07"/>
+<polyline points="64,243.2 138.5,260.06 213,263.8 287.5,288.22 362,300.66 436.5,272.44 511,276.25 585.5,294.27 660,297.8" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="64" cy="243.2" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>Lemah - setelah rumah ke- 0: 0,4</title></circle>
+<circle cx="138.5" cy="260.06" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>Lemah - setelah rumah ke- 1: 0,3</title></circle>
+<circle cx="213" cy="263.8" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>Lemah - setelah rumah ke- 2: 0,3</title></circle>
+<circle cx="287.5" cy="288.22" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>Lemah - setelah rumah ke- 3: 0,2</title></circle>
+<circle cx="362" cy="300.66" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>Lemah - setelah rumah ke- 4: 0,2</title></circle>
+<circle cx="436.5" cy="272.44" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>Lemah - setelah rumah ke- 5: 0,3</title></circle>
+<circle cx="511" cy="276.25" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>Lemah - setelah rumah ke- 6: 0,3</title></circle>
+<circle cx="585.5" cy="294.27" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>Lemah - setelah rumah ke- 7: 0,2</title></circle>
+<circle cx="660" cy="297.8" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>Lemah - setelah rumah ke- 8: 0,2</title></circle>
+<text x="670" y="301.8" font-size="12" fill="#52514e">Lemah</text>
+<text x="24" y="408" font-size="11" fill="#52514e">Pita = selang kepercayaan 95%. Nilai lengkap di tabel laporan.</text>
+</svg>

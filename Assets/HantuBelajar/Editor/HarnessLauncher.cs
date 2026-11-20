@@ -12,6 +12,10 @@ namespace HantuBelajar.EditorTools
         [MenuItem("Tools/Hantu Belajar/Uji/Screenshot visual")] public static void RunShots() { Run("shots"); }
         [MenuItem("Tools/Hantu Belajar/Uji/Bot bermain (smoke)")] public static void RunSmoke() { Run("smoke"); }
         [MenuItem("Tools/Hantu Belajar/Uji/Eksperimen DDA")] public static void RunDda() { Run("dda"); }
+        [MenuItem("Tools/Hantu Belajar/Uji/Kalibrasi keterampilan bot")] public static void RunCalib() { Run("calib"); }
+        [MenuItem("Tools/Hantu Belajar/Uji/Eksperimen hantu belajar")] public static void RunLearning() { Run("learning"); }
+        [MenuItem("Tools/Hantu Belajar/Uji/Uji coba pemain (peserta simulasi)")] public static void RunPlaytestSim() { Run("playtest"); }
+        [MenuItem("Tools/Hantu Belajar/Uji/Susun ulang laporan eksperimen (dari data tersimpan)")] public static void RunReports() { Run("reports"); }
         [MenuItem("Tools/Hantu Belajar/Uji/Uji kejar hantu")] public static void RunChase() { Run("chase"); }
         [MenuItem("Tools/Hantu Belajar/Uji/Alur pemain (menu-main-menang)")] public static void RunFlow() { Run("flow"); }
         [MenuItem("Tools/Hantu Belajar/Uji/Apakah hantu tahu pemain bersembunyi")] public static void RunHide() { Run("hide"); }

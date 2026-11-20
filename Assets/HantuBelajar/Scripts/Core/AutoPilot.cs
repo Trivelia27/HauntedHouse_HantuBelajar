@@ -4,9 +4,13 @@ using UnityEngine;
 namespace HantuBelajar
 {
     /// <summary>
-    /// Bot pemain untuk eksperimen DDA, uji otomatis, dan rekaman demo.
-    /// Pro: tenang, jongkok saat hantu dekat, memilih tempat sembunyi yang JARANG dipakai.
-    /// Sedang: tempat sembunyi terdekat. Lemah: sering berlari (berisik), selalu kembali ke tempat sembunyi favorit.
+    /// Bot pemain untuk eksperimen DDA, uji otomatis, dan rekaman demo. Tiga tingkat keterampilan:
+    /// Pro   : cepat sadar ancaman & langsung bereaksi, berlari saat hantu jauh (menyisakan stamina), mengendap saat hantu dekat tapi membelakangi,
+    ///         tempat sembunyi aman yang jarang dicurigai.
+    /// Sedang: sadar ancaman lebih dekat & bereaksi 0,45 dtk, kadang ragu / salah jalan, berlari saat hantu jauh, tempat sembunyi terdekat yang aman.
+    /// Lemah : telat sadar & bereaksi 0,8 dtk, berjalan sambil ragu / kadang salah jalan, panik berlari (berisik) saat hantu dekat,
+    ///         kembali ke tempat sembunyi favorit walau berisiko dan keluar terlalu cepat.
+    /// Opsi uji belajar: habitOn (kebiasaan memilih jenis tempat sembunyi) atau randomHide (pilihan acak).
     /// </summary>
     public class AutoPilot : MonoBehaviour
     {
@@ -15,12 +19,26 @@ namespace HantuBelajar
         public string mode = "-";
         public int hides, flees, stuckEvents, uses;
         public bool allowHide = true;
+        // uji "hantu belajar": kebiasaan memilih jenis tempat sembunyi, atau memilih acak sama sekali
+        public bool habitOn, randomHide; public SpotKind habitKind = SpotKind.Lemari; public float habitStrength = 0.85f;
+
+        struct Skill { public float chaseRange, seeRange, react, hideWait, safeDist, guardDist, maxHide, detour, pause; public bool runFar, crouchNear, panicRun, riskyHide; }
+
+        static Skill SkillOf(Profile p)
+        {
+            switch (p)
+            {
+                case Profile.Pro: return new Skill { chaseRange = 18f, seeRange = 11f, react = 0f, hideWait = 2.5f, safeDist = 7f, guardDist = 10f, maxHide = 20f, runFar = true, crouchNear = true };
+                case Profile.Lemah: return new Skill { chaseRange = 10f, seeRange = 6f, react = 0.8f, hideWait = 1.4f, safeDist = 4f, guardDist = 5f, maxHide = 10f, detour = 0.35f, pause = 0.12f, panicRun = true, riskyHide = true };
+                default: return new Skill { chaseRange = 13f, seeRange = 8f, react = 0.45f, hideWait = 4f, safeDist = 6f, guardDist = 10f, maxHide = 22f, detour = 0.12f, pause = 0.05f, runFar = true };
+            }
+        }
 
         PlayerController p; GameManager gm;
         List<Vector3> route; int ri;
         Interactable target; Vector3Int targetNode;
-        float repathT, stuckT, hideWait, nudgeT, reactT, fleeT;
-        Vector3 lastPos, nudgeDir;
+        float repathT, stuckT, hideWait, nudgeT, reactT, fleeT, pauseT, detourT, hiddenT, blockedT, slideT;
+        Vector3 lastPos, nudgeDir, stepPos, slideDir;
         HidingSpot favorite;
         int stuckCount;
 
@@ -33,22 +51,34 @@ namespace HantuBelajar
             float dt = Time.deltaTime;
             GhostAI g = gm.ghost;
             float gd = g.DistanceTo(p.transform.position);
-            reactT -= dt;
-            bool threat = !g.frozen && ((g.state == GhostState.Kejar && gd < 18f) || (g.canSee && gd < 10f));
-            if (profile == Profile.Lemah && threat && reactT > 0f) threat = false;     // reaksi lambat
-            if (!threat && profile == Profile.Lemah) reactT = 0.6f;
+            Skill k = SkillOf(profile);
+            bool threatNow = !g.frozen && ((g.state == GhostState.Kejar && gd < k.chaseRange) || (g.canSee && gd < k.seeRange));
+            reactT = threatNow ? reactT + dt : 0f;
+            bool threat = threatNow && reactT >= k.react;                      // waktu reaksi sesuai keterampilan
 
             if (p.hidden)
             {
                 p.autoDir = Vector3.zero; mode = "Bersembunyi";
-                bool safe = g.state != GhostState.Kejar && g.state != GhostState.Periksa && !((g.state == GhostState.Cari || g.state == GhostState.Jaga) && gd < 10f) && gd > 6f;
-                hideWait = safe ? hideWait + dt : 0f;
-                if (hideWait > (profile == Profile.Pro ? 2.5f : 4f)) { p.ExitHide(); hideWait = 0f; route = null; target = null; }
+                hiddenT += dt;
+                bool hunting = g.state == GhostState.Kejar || g.state == GhostState.Periksa;
+                bool safe = !hunting && !((g.state == GhostState.Cari || g.state == GhostState.Jaga) && gd < k.guardDist) && gd > k.safeDist;
+                // sudah lama bersembunyi: keluar diam-diam selama hantu tidak memburu dan tidak tepat di depan (mencegah menunggu tanpa akhir)
+                bool restless = hiddenT > k.maxHide && !hunting && gd > 6f;
+                hideWait = safe || restless ? hideWait + dt : 0f;
+                if (hideWait > k.hideWait) { p.ExitHide(); hideWait = 0f; hiddenT = 0f; route = null; target = null; }
                 return;
             }
+            hiddenT = 0f;
+
+            // ragu-ragu / melihat-lihat sebentar (pemain kurang terampil)
+            pauseT -= dt;
+            if (!threat && pauseT <= 0f && k.pause > 0f && Random.value < k.pause * dt) pauseT = Random.Range(1f, 2.2f);
+            if (!threat && pauseT > 0f) { p.autoDir = Vector3.zero; p.autoRun = false; mode = "Ragu"; TryUse(); return; }
 
             fleeT -= dt;
-            if (threat) { if (fleeT <= 0f || route == null) { Flee(g, gd); fleeT = 0.6f; } }
+            // pemain terampil terus menjauh selama hantu masih mengejar di dekatnya (tidak kembali ke tujuan di tengah pengejaran)
+            if (!threat && k.react < 0.5f && g.state == GhostState.Kejar && gd < k.chaseRange + 8f && route != null && ri < route.Count && mode == "Kabur") threat = true;
+            if (threat) { if (fleeT <= 0f || route == null || ri >= route.Count) { Flee(g, gd); fleeT = 0.6f; } }
             else if (target is HidingSpot) { target = null; route = null; }
             if (!threat || route == null)
             {
@@ -61,6 +91,13 @@ namespace HantuBelajar
         // ------------------------------------------------------------------ tujuan
         void Objective(GhostAI g, float gd)
         {
+            Skill k = SkillOf(profile);
+            if (detourT > 0f)
+            {
+                detourT -= Time.deltaTime;
+                if (route != null && ri < route.Count) { Pace(k, g, gd); return; }   // masih salah jalan
+                detourT = 0f; repathT = 0f;
+            }
             repathT -= Time.deltaTime;
             if (target != null && repathT > 0f && route != null) return;
             repathT = 1.2f;
@@ -91,12 +128,39 @@ namespace HantuBelajar
             }
             if (best == null && gm.relicsFound >= gm.RelicsNeeded) best = H.exit;
             if (best == null) { mode = "Menjelajah"; WanderFar(); return; }
+            bool fresh = best != target;
             target = best;
+            if (fresh && k.detour > 0f && Random.value < k.detour)
+            {
+                // salah jalan dulu sebelum menuju tujuan sebenarnya
+                Vector3Int dn = RandomNear(2, 4);
+                if (dn != p.node) { RouteTo(dn); detourT = 8f; mode = "Salah jalan"; Pace(k, g, gd); return; }
+            }
             Vector3Int tn = NodeFor(best);
             mode = best is RelicPickup ? "Ambil relik" : best is KeyPickup ? "Ambil kunci" : best is LockedDoor ? "Buka gembok" : best is BatteryPickup ? "Ambil baterai" : "Ke pintu keluar";
             RouteTo(tn);
-            p.autoCrouch = profile == Profile.Pro && gd < 10f && g.state != GhostState.Kejar;
-            p.autoRun = profile == Profile.Lemah ? (route != null && route.Count > 3) : profile == Profile.Sedang ? (route != null && route.Count > 6 && gd > 14f) : false;
+            Pace(k, g, gd);
+        }
+
+        /// <summary>Lari / jalan / mengendap menurut keterampilan: lari saat hantu jauh (efisien), mengendap saat dekat, atau panik berlari (berisik).</summary>
+        void Pace(Skill k, GhostAI g, float gd)
+        {
+            // mengendap hanya bila hantu dekat tetapi tidak menghadap ke arah pemain (bila menghadap, lebih baik menjauh dengan jalan biasa)
+            Vector3 toMe = G.Flat(p.transform.position - g.transform.position);
+            bool facing = toMe.sqrMagnitude > 0.01f && Vector3.Angle(G.Flat(g.transform.forward), toMe) < 70f;
+            p.autoCrouch = k.crouchNear && gd < 9f && g.state != GhostState.Kejar && !facing;
+            bool longRoute = route != null && route.Count > 6;
+            // pemain terampil berlari hanya bila stamina masih banyak (cadangan untuk kabur); pemain lemah panik berlari saat hantu dekat
+            p.autoRun = !p.autoCrouch && ((k.runFar && longRoute && gd > 14f && p.stamina > 70f) || (k.panicRun && gd < 12f));
+        }
+
+        Vector3Int RandomNear(int min, int max)
+        {
+            HouseLayout L = gm.layout;
+            int[] d = L.Distances(p.node, false, p.hasKey);
+            List<Vector3Int> c = new List<Vector3Int>();
+            for (int i = 0; i < d.Length; i++) if (d[i] >= min && d[i] <= max) c.Add(L.FromIdx(i));
+            return c.Count > 0 ? c[Random.Range(0, c.Count)] : p.node;
         }
 
         Vector3Int NodeFor(Interactable it)
@@ -126,24 +190,34 @@ namespace HantuBelajar
         void Flee(GhostAI g, float gd)
         {
             HouseLayout L = gm.layout;
-            if (target is HidingSpot hs && !hs.occupied && route != null) { p.autoRun = true; p.autoCrouch = false; return; }
-            flees++;
-            mode = "Kabur";
             Vector3Int gn = L.NodeAt(g.transform.position);
             int[] dp = L.Distances(p.node, false, p.hasKey), dg = L.Distances(gn, true, true);
+            if (target is HidingSpot hs && !hs.occupied && route != null)
+            {
+                // tetap ke tempat sembunyi yang dipilih selama hantu belum memotong jalan ke sana
+                int a0 = L.Dist(dp, hs.frontNode), b0 = L.Dist(dg, hs.frontNode);
+                if (a0 >= 0 && (b0 < 0 || b0 > a0 || a0 == 0) && (a0 <= 1 || SafePath(L, hs.frontNode, dg))) { p.autoRun = true; p.autoCrouch = false; return; }
+                target = null;
+            }
+            flees++;
+            mode = "Kabur";
             HidingSpot pick = null; float best = float.MaxValue;
             if (allowHide)
             {
-                if (profile == Profile.Lemah && favorite != null && !favorite.occupied && L.Dist(dp, favorite.frontNode) >= 0 && L.Dist(dp, favorite.frontNode) <= 8) pick = favorite;
+                Skill k = SkillOf(profile);
+                bool useHabit = habitOn && Random.value < habitStrength;
+                if (profile == Profile.Lemah && !habitOn && !randomHide && favorite != null && !favorite.occupied && L.Dist(dp, favorite.frontNode) >= 0 && L.Dist(dp, favorite.frontNode) <= 8) pick = favorite;
                 else
                     foreach (HidingSpot s in gm.house.spots)
                     {
                         if (s.occupied) continue;
                         int a = L.Dist(dp, s.frontNode), b = L.Dist(dg, s.frontNode);
                         if (a < 0 || a > 7 || (b >= 0 && b <= a)) continue;
-                        if (!SafePath(L, s.frontNode, dg)) continue;
+                        if (!k.riskyHide && !SafePath(L, s.frontNode, dg)) continue;
                         float score = a;
                         if (profile == Profile.Pro) score += GhostMemory.Mean(s) * 8f - Mathf.Min(b, 8) * 0.5f;
+                        if (useHabit && s.kind == habitKind) score -= 6f;          // kebiasaan: jenis favorit walau sedikit lebih jauh
+                        if (randomHide) score = Random.value * 10f;                 // tanpa kebiasaan sama sekali
                         if (score < best) { best = score; pick = s; }
                     }
             }
@@ -161,14 +235,18 @@ namespace HantuBelajar
             HouseLayout L = gm.layout;
             Vector3Int gn = L.NodeAt(g.transform.position);
             int[] dp = L.Distances(p.node, false, p.hasKey), dg = L.Distances(gn, true, true);
-            Vector3Int far = p.node; int fs = -1;
+            Vector3Int far = p.node; int fs = int.MinValue;
+            Vector3Int alt = p.node; int fa = int.MinValue;
+            int here = L.Dist(dg, p.node);
             for (int i = 0; i < dp.Length; i++)
             {
-                if (dp[i] < 2 || dp[i] > 7) continue;
+                if (dp[i] < 2 || dp[i] > 7 || dg[i] < 0) continue;
                 int s = dg[i] - dp[i];
                 if (s > fs && SafePath(L, L.FromIdx(i), dg)) { fs = s; far = L.FromIdx(i); }
+                if (dg[i] > here && dg[i] > fa) { fa = dg[i]; alt = L.FromIdx(i); }   // cadangan: titik yang lebih jauh dari hantu
             }
-            target = null; RouteTo(far);
+            if (far == p.node) far = alt;
+            target = null; RouteTo(far); mode = "Kabur";
             p.autoRun = true; p.autoCrouch = false;
         }
 
@@ -204,11 +282,26 @@ namespace HantuBelajar
             float flat = G.Flat(d).magnitude;
             bool last = ri == route.Count - 1;
             if (flat < (last ? 0.5f : 0.4f) && Mathf.Abs(d.y) < 1.4f) { ri++; if (ri >= route.Count) { p.autoDir = Vector3.zero; return; } w = route[ri]; d = w - transform.position; }
-            p.autoDir = G.Flat(d).normalized;
+            // penghindar lokal hanya saat benar-benar tertahan (CharacterController sudah menggeser sendiri bila sekadar menyerempet)
+            Vector3 want = G.Flat(d).normalized;
+            float speedNow = G.Flat(transform.position - stepPos).magnitude / Mathf.Max(dt, 1e-4f);
+            stepPos = transform.position;
+            if (slideT > 0f) { slideT -= dt; want = slideDir; }
+            else
+            {
+                blockedT = speedNow < 0.8f ? blockedT + dt : 0f;
+                if (blockedT > 0.15f)
+                {
+                    blockedT = 0f;
+                    Vector3 side = Avoid(want);
+                    if (Vector3.Dot(side, want) < 0.95f) { slideDir = side; slideT = 0.45f; want = side; }
+                }
+            }
+            p.autoDir = want;
             p.autoLook = null;
-            // macet
+            // macet (saat kabur dicek jauh lebih cepat: satu detik tersangkut perabot = tertangkap)
             stuckT += dt;
-            if (stuckT > 1.6f)
+            if (stuckT > (mode == "Kabur" ? 0.5f : 1.6f))
             {
                 if ((transform.position - lastPos).magnitude < 0.25f)
                 {
@@ -219,6 +312,26 @@ namespace HantuBelajar
                 else stuckCount = 0;
                 lastPos = transform.position; stuckT = 0f;
             }
+        }
+
+        /// <summary>
+        /// Penghindar lokal: graf node tidak tahu letak perabot, jadi bila garis lurus ke titik jalur berikutnya terhalang
+        /// (ranjang, lemari, sudut dinding), bot menyusuri sisi penghalang yang paling searah dengan tujuan.
+        /// </summary>
+        Vector3 Avoid(Vector3 dir)
+        {
+            const float reach = 0.9f;
+            if (dir.sqrMagnitude < 0.01f) return dir;
+            Vector3 origin = transform.position + Vector3.up * 0.55f;
+            if (!Physics.SphereCast(origin, 0.28f, dir, out RaycastHit hit, reach, ~(1 << 2), QueryTriggerInteraction.Ignore)) return dir;
+            if (hit.normal.y > 0.5f) return dir;                                  // lantai / tangga: bukan penghalang
+            Vector3 n = G.Flat(hit.normal);
+            if (n.sqrMagnitude < 0.01f) return dir;
+            n.Normalize();
+            if (Vector3.Dot(n, dir) > -0.15f) return dir;                         // hanya menyerempet
+            Vector3 t = Vector3.Cross(Vector3.up, n);
+            if (Vector3.Dot(t, dir) < 0f) t = -t;
+            return (t * 0.9f + n * 0.1f).normalized;
         }
 
         void TryUse()
@@ -232,14 +345,8 @@ namespace HantuBelajar
             if (target is HidingSpot hs)
             {
                 if (hs.occupied) { target = null; return; }
-                GhostAI g = gm.ghost;
-                bool watched = g.canSee && g.DistanceTo(transform.position) < 9f;
-                if (watched && profile != Profile.Lemah && p.stamina > 8f)
-                {
-                    // hantu masih melihat: lari dulu menjauh lalu coba lagi
-                    target = null; route = null; repathT = 0f; FleeAway(g);
-                    return;
-                }
+                // di persembunyian pemain langsung aman (hantu tidak pernah menemukan pemain yang bersembunyi),
+                // jadi bot selalu masuk walau hantu melihat - kembali ke arah hantu justru berbahaya
                 p.EnterHide(hs); hides++; if (favorite == null) favorite = hs; hideWait = 0f;
             }
             else

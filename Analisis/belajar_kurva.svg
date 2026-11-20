@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="Keunggulan prediksi hantu atas tebakan acak">
+<rect x="0.5" y="0.5" width="759" height="419" rx="10" fill="#fcfcfb" stroke="#e2e1dc"/>
+<text x="24" y="32" font-size="16" font-weight="600" fill="#0b0b0b">Keunggulan prediksi hantu atas tebakan acak</text>
+<text x="24" y="52" font-size="12" fill="#52514e">peluang model - peluang acak untuk tempat sembunyi yang dipilih; 0 = tidak lebih baik dari acak</text>
+<text x="709.6" y="68" font-size="12" fill="#52514e">Acak</text>
+<line x1="687.6" y1="64" x2="703.6" y2="64" stroke="#eb6834" stroke-width="2" stroke-linecap="round"/>
+<text x="590.4" y="68" font-size="12" fill="#52514e">Berkebiasaan</text>
+<line x1="568.4" y1="64" x2="584.4" y2="64" stroke="#2a78d6" stroke-width="2" stroke-linecap="round"/>
+<line x1="64" x2="660" y1="352" y2="352" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="356" font-size="12" text-anchor="end" fill="#52514e">-0,10</text>
+<line x1="64" x2="660" y1="284" y2="284" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="288" font-size="12" text-anchor="end" fill="#52514e">0,00</text>
+<line x1="64" x2="660" y1="216" y2="216" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="220" font-size="12" text-anchor="end" fill="#52514e">0,10</text>
+<line x1="64" x2="660" y1="148" y2="148" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="152" font-size="12" text-anchor="end" fill="#52514e">0,20</text>
+<line x1="64" x2="660" y1="80" y2="80" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="84" font-size="12" text-anchor="end" fill="#52514e">0,30</text>
+<text x="64" y="372" font-size="12" text-anchor="middle" fill="#52514e">1</text>
+<text x="183.2" y="372" font-size="12" text-anchor="middle" fill="#52514e">2</text>
+<text x="302.4" y="372" font-size="12" text-anchor="middle" fill="#52514e">3</text>
+<text x="421.6" y="372" font-size="12" text-anchor="middle" fill="#52514e">4</text>
+<text x="540.8" y="372" font-size="12" text-anchor="middle" fill="#52514e">5</text>
+<text x="660" y="372" font-size="12" text-anchor="middle" fill="#52514e">6</text>
+<text x="362" y="394" font-size="12" text-anchor="middle" fill="#52514e">rumah ke-</text>
+<line x1="64" x2="660" y1="352" y2="352" stroke="#52514e" stroke-width="1"/>
+<line x1="64" x2="660" y1="284" y2="284" stroke="#8a8984" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="670" y="288" font-size="11" font-style="italic" fill="#52514e">setara acak</text>
+<polygon points="64,249.88 183.2,141.63 302.4,171.53 421.6,165.38 540.8,231.64 660,165.8 660,257.16 540.8,323.91 421.6,223.4 302.4,246.46 183.2,197.32 64,280.15" fill="#2a78d6" fill-opacity="0.07"/>
+<polyline points="64,265.01 183.2,169.48 302.4,208.99 421.6,194.39 540.8,277.78 660,211.48" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="64" cy="265.01" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Berkebiasaan - rumah ke- 1: 0,03</title></circle>
+<circle cx="183.2" cy="169.48" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Berkebiasaan - rumah ke- 2: 0,17</title></circle>
+<circle cx="302.4" cy="208.99" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Berkebiasaan - rumah ke- 3: 0,11</title></circle>
+<circle cx="421.6" cy="194.39" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Berkebiasaan - rumah ke- 4: 0,13</title></circle>
+<circle cx="540.8" cy="277.78" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Berkebiasaan - rumah ke- 5: 0,01</title></circle>
+<circle cx="660" cy="211.48" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>Berkebiasaan - rumah ke- 6: 0,11</title></circle>
+<text x="670" y="215.48" font-size="12" fill="#52514e">Berkebiasaan</text>
+<polygon points="64,266.06 183.2,247.51 302.4,266.27 421.6,286.52 540.8,217.4 660,164.82 660,227.45 540.8,280.07 421.6,322.24 302.4,310.1 183.2,310.44 64,287.32" fill="#eb6834" fill-opacity="0.07"/>
+<polyline points="64,276.69 183.2,278.98 302.4,288.18 421.6,304.38 540.8,248.73 660,196.13" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="64" cy="276.69" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Acak - rumah ke- 1: 0,01</title></circle>
+<circle cx="183.2" cy="278.98" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Acak - rumah ke- 2: 0,01</title></circle>
+<circle cx="302.4" cy="288.18" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Acak - rumah ke- 3: -0,01</title></circle>
+<circle cx="421.6" cy="304.38" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Acak - rumah ke- 4: -0,03</title></circle>
+<circle cx="540.8" cy="248.73" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Acak - rumah ke- 5: 0,05</title></circle>
+<circle cx="660" cy="196.13" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>Acak - rumah ke- 6: 0,13</title></circle>
+<text x="670" y="200.13" font-size="12" fill="#52514e">Acak</text>
+<text x="24" y="408" font-size="11" fill="#52514e">Pita = selang kepercayaan 95%. Nilai lengkap di tabel laporan.</text>
+</svg>

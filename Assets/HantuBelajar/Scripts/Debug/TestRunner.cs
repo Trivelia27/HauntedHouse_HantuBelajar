@@ -16,6 +16,7 @@ namespace HantuBelajar
         public string kind = "shots";
         GameManager gm;
         readonly StringBuilder log = new StringBuilder();
+        readonly StringBuilder trace = new StringBuilder();
         readonly List<string> errors = new List<string>();
         RenderTexture rt; Texture2D read;
         const int W = 1280, H = 720;
@@ -38,12 +39,16 @@ namespace HantuBelajar
             rt = new RenderTexture(W, H, 24); read = new Texture2D(W, H, TextureFormat.RGB24, false);
             for (int i = 0; i < 10; i++) yield return null;
             string env(string k, string d) { string v = System.Environment.GetEnvironmentVariable(k); return string.IsNullOrEmpty(v) ? d : v; }
-            GhostAI.LogStates = kind == "smoke" || kind == "dda";
+            GhostAI.LogStates = kind == "smoke" || kind == "calib";
             switch (kind)
             {
                 case "shots": yield return Shots(); break;
                 case "smoke": yield return Smoke(int.Parse(env("HB_HOUSES", "3")), float.Parse(env("HB_SCALE", "3"), CI), env("HB_PROFILE", "Sedang")); break;
-                case "dda": yield return DdaExperiment(int.Parse(env("HB_HOUSES", "4")), float.Parse(env("HB_SCALE", "4"), CI)); break;
+                case "dda": yield return DdaStudy(int.Parse(env("HB_REPS", "4")), int.Parse(env("HB_HOUSES", "8")), float.Parse(env("HB_SCALE", "8"), CI), env("HB_PROFILES", "Pro,Sedang,Lemah"), false); break;
+                case "calib": yield return DdaStudy(int.Parse(env("HB_REPS", "2")), int.Parse(env("HB_HOUSES", "6")), float.Parse(env("HB_SCALE", "8"), CI), env("HB_PROFILES", "Pro,Sedang,Lemah"), true); break;
+                case "learning": yield return LearningStudy(int.Parse(env("HB_REPS", "10")), int.Parse(env("HB_HOUSES", "6")), float.Parse(env("HB_SCALE", "8"), CI)); break;
+                case "reports": RebuildReports(int.Parse(env("HB_HOUSES", "8")), float.Parse(env("HB_SCALE", "16"), CI), int.Parse(env("HB_LEARN_HOUSES", "6"))); break;
+                case "playtest": yield return PlaytestSim(int.Parse(env("HB_PARTICIPANTS", "3")), float.Parse(env("HB_SESSION", "1.5"), CI), float.Parse(env("HB_SCALE", "4"), CI)); break;
                 case "chase": yield return Chase(); break;
                 case "flow": yield return Flow(); break;
                 case "hide": yield return HideTest(); break;
@@ -72,6 +77,26 @@ namespace HantuBelajar
         }
 
         IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
+        const float HouseLimit = 420f;   // detik permainan per rumah dalam eksperimen; lewat batas = gagal
+        static string Env(string k, string d) { string v = System.Environment.GetEnvironmentVariable(k); return string.IsNullOrEmpty(v) ? d : v; }
+        static int RepFrom(int reps) { return Mathf.Clamp(int.Parse(Env("HB_REP_FROM", "1")), 1, reps); }
+        static int RepTo(int reps) { return Mathf.Clamp(int.Parse(Env("HB_REP_TO", reps.ToString())), 1, reps); }
+
+        /// <summary>Folder data mentah per potongan; dikosongkan bila eksperimen dijalankan utuh (semua replikasi sekaligus).</summary>
+        static string RowsDir(string name, int from, int to, int reps)
+        {
+            string dir = Path.Combine("TestOutput", name);
+            if (from == 1 && to == reps && Directory.Exists(dir)) Directory.Delete(dir, true);
+            Directory.CreateDirectory(dir);
+            return dir;
+        }
+
+        static int CountReps<T>(List<T> rows, System.Func<T, int> rep)
+        {
+            HashSet<int> s = new HashSet<int>();
+            foreach (T x in rows) s.Add(rep(x));
+            return s.Count;
+        }
         IEnumerator Real(float s) { float t = Time.realtimeSinceStartup + s; while (Time.realtimeSinceStartup < t) yield return null; }
 
         // ------------------------------------------------------------------ capture
@@ -271,85 +296,264 @@ namespace HantuBelajar
             log.AppendLine("posisi di luar batas: " + maxFloorErr + " frame, diam terlama " + longestIdle.ToString("0") + " dtk (waktu game)");
         }
 
-        // ------------------------------------------------------------------ eksperimen DDA
-        IEnumerator DdaExperiment(int housesPerBlock, float scale)
+        // ------------------------------------------------------------------ eksperimen DDA (replikasi + statistik) & kalibrasi bot
+        /// <summary>
+        /// profil x kondisi (DDA / Tetap) x replikasi x rumah. calib = hanya kondisi Tetap (memeriksa urutan keterampilan bot).
+        /// Seed sama untuk DDA & Tetap dalam satu replikasi. Laporan: Hasil_Eksperimen_DDA.md (+ grafik di Analisis/).
+        /// </summary>
+        IEnumerator DdaStudy(int reps, int houses, float scale, string profileList, bool calib)
         {
+            Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0;
             AutoPilot bot = gm.player.gameObject.AddComponent<AutoPilot>();
-            StringBuilder csv = new StringBuilder("profil,kondisi,rumah,hasil,waktu,relik,relikTotal,dikejar,sembunyi,nyaris,dAwal,dAkhir,lantai,sembunyiTempat,baterai\n");
-            Dictionary<string, List<float[]>> agg = new Dictionary<string, List<float[]>>();
-            foreach (AutoPilot.Profile prof in new[] { AutoPilot.Profile.Pro, AutoPilot.Profile.Sedang, AutoPilot.Profile.Lemah })
-                foreach (bool adaptive in new[] { true, false })
-                {
-                    string key = prof + "|" + (adaptive ? "DDA" : "Tetap");
-                    agg[key] = new List<float[]>();
-                    bot.profile = prof;
-                    gm.dda.adaptive = adaptive; gm.dda.d = 0.4f; gm.dda.Ps = DDAManager.Target; gm.dda.Apply();
-                    GhostMemory.Reset();
-                    gm.seed = 5000 + (int)prof * 100;   // seed sama untuk kondisi DDA & tetap -> perbandingan adil
-                    gm.houseNo = 0;
-                    gm.NextHouse();
-                    for (int h = 0; h < housesPerBlock; h++)
+            string[] profs = profileList.Split(',');
+            bool[] conds = calib ? new[] { false } : new[] { true, false };
+            List<DdaRow> rows = new List<DdaRow>();
+            int rFrom = RepFrom(reps), rTo = RepTo(reps);
+            int total = profs.Length * (rTo - rFrom + 1) * conds.Length * houses, done = 0; float t0 = Time.realtimeSinceStartup;
+            log.AppendLine((calib ? "kalibrasi" : "eksperimen DDA") + ": " + profileList + " x " + (calib ? "Tetap" : "DDA/Tetap") + " x replikasi " + rFrom + "-" + rTo + " dari " + reps + " x " + houses + " rumah, skala x" + scale);
+            foreach (string pf in profs)
+            {
+                AutoPilot.Profile prof = (AutoPilot.Profile)System.Enum.Parse(typeof(AutoPilot.Profile), pf.Trim());
+                for (int r = rFrom; r <= rTo; r++)
+                    foreach (bool adaptive in conds)
                     {
-                        float dStart = gm.dda.d; float t0 = Time.time;
-                        int floors = gm.layout.floors, spots = gm.layout.spots.Count, batts = gm.layout.batteries.Count;
-                        string result = "TIMEOUT";
+                        bot.profile = prof; bot.habitOn = false; bot.randomHide = false;
+                        gm.dda.adaptive = adaptive; gm.dda.d = 0.4f; gm.dda.P = DDAManager.Target; gm.dda.Ps = DDAManager.Target; gm.dda.Apply();
+                        GhostMemory.Reset(); GhostMemory.feed.Clear();
+                        gm.StartStudyHouse(70000 + r * 1000 + (int)prof * 100);
+                        yield return Frames(2);
+                        for (int h = 1; h <= houses; h++)
+                        {
+                            float dStart = gm.dda.d, tStart = Time.time; int seedNow = gm.seed;
+                            string result = "timeout";
+                            float nextS = 0f; Vector3 lastPP = gm.player.transform.position; float lastPT = Time.time;
+                            while (true)
+                            {
+                                Time.timeScale = scale;
+                                if (calib && Time.time >= nextS)
+                                {
+                                    // jejak pengejaran (diagnosis bot): jarak, kecepatan nyata, lari/jongkok, mode bot
+                                    Vector3 pp = gm.player.transform.position; float dtS = Mathf.Max(0.001f, Time.time - lastPT);
+                                    if (gm.ghost.state == GhostState.Kejar || gm.state == GameManager.State.Catching)
+                                        trace.AppendLine(prof + " seed " + seedNow + " t=" + gm.houseTime.ToString("0.00", CI) + " jarak " + gm.ghost.DistanceTo(pp).ToString("0.0", CI) + " v " + (G.Flat(pp - lastPP).magnitude / dtS).ToString("0.0", CI) +
+                                                         (gm.player.running ? " LARI" : "") + (gm.player.crouch ? " JONGKOK" : "") + (gm.player.hidden ? " SEMBUNYI" : "") + " st " + gm.player.stamina.ToString("0", CI) + " mode " + bot.mode +
+                                                         " p" + gm.player.node + " h" + gm.layout.NodeAt(gm.ghost.transform.position) + " lihat " + gm.ghost.canSee + " macet " + bot.stuckEvents);
+                                    lastPP = pp; lastPT = Time.time; nextS = Time.time + 0.25f;
+                                }
+                                if (gm.state == GameManager.State.Won) { result = "lolos"; break; }
+                                if (gm.state == GameManager.State.Caught) { result = "tertangkap"; break; }
+                                if (Time.time - tStart > HouseLimit) break;
+                                yield return null;
+                            }
+                            Time.timeScale = 1f;
+                            if (result == "timeout" && gm.state == GameManager.State.Playing) gm.dda.OnCaught();    // lewat batas = gagal
+                            rows.Add(new DdaRow
+                            {
+                                profile = prof.ToString(), cond = adaptive ? "DDA" : "Tetap", rep = r, house = h, seed = seedNow, result = result, time = gm.houseTime,
+                                relFrac = gm.relicsFound / (double)Mathf.Max(1, gm.RelicsNeeded), chases = gm.dda.chasesHouse, hides = gm.dda.hidesHouse, near = gm.dda.nearMisses,
+                                dStart = dStart, dEnd = gm.dda.d, meanP = gm.dda.nP > 0 ? gm.dda.sumP / gm.dda.nP : double.NaN, nP = gm.dda.nP,
+                            });
+                            done++;
+                            log.AppendLine("  " + prof + (adaptive ? " DDA" : " Tetap") + " r" + r + " rumah " + h + " seed " + seedNow + ": " + result + " t=" + gm.houseTime.ToString("0", CI) + " relik " + gm.relicsFound + "/" + gm.RelicsNeeded +
+                                           " dikejar " + gm.dda.chasesHouse + " sembunyi " + gm.dda.hidesHouse + " d " + dStart.ToString("0.00", CI) + "->" + gm.dda.d.ToString("0.00", CI) + (result != "lolos" ? " | mode " + bot.mode + " stamina " + gm.player.stamina.ToString("0", CI) + " hantu " + gm.ghost.state : ""));
+                            if (done % 6 == 0 || done == total)
+                            {
+                                float el = Time.realtimeSinceStartup - t0;
+                                Debug.Log("[Eksperimen] " + done + "/" + total + " rumah, " + el.ToString("0") + " dtk, perkiraan sisa " + (el / done * (total - done)).ToString("0") + " dtk");
+                            }
+                            yield return Frames(2);
+                            gm.NextHouse();
+                            yield return Frames(2);
+                        }
+                    }
+            }
+            Time.timeScale = 1f;
+            log.AppendLine();
+            foreach (string pf in profs)
+                foreach (bool adaptive in conds)
+                {
+                    List<DdaRow> l = rows.FindAll(x => x.profile == pf.Trim() && x.cond == (adaptive ? "DDA" : "Tetap"));
+                    int win = l.FindAll(x => x.result == "lolos").Count, to = l.FindAll(x => x.result == "timeout").Count;
+                    double t = 0, ch = 0; foreach (DdaRow x in l) { t += x.time; ch += x.chases; }
+                    log.AppendLine(pf.Trim() + " " + (adaptive ? "DDA" : "Tetap") + ": lolos " + win + "/" + l.Count + ", timeout " + to + ", waktu rata2 " + (t / Mathf.Max(1, l.Count)).ToString("0") + " dtk, dikejar rata2 " + (ch / Mathf.Max(1, l.Count)).ToString("0.0", CI) +
+                                  (adaptive && l.Count > 0 ? ", d akhir rata2 " + AvgEnd(l, houses).ToString("0.00", CI) : ""));
+                }
+            log.AppendLine("waktu total " + (Time.realtimeSinceStartup - t0).ToString("0") + " dtk");
+            if (calib) { Directory.CreateDirectory("TestOutput"); File.WriteAllText("TestOutput/kalibrasi_bot.txt", log.ToString()); File.WriteAllText("TestOutput/kalibrasi_kejar.txt", trace.ToString()); }
+            else
+            {
+                string dir = RowsDir("dda_rows", rFrom, rTo, reps);
+                File.WriteAllText(Path.Combine(dir, profileList.Replace(",", "-") + "_r" + rFrom + "-" + rTo + ".csv"), ResearchReport.DdaCsv(rows));
+                List<DdaRow> all = ResearchReport.LoadDdaRows(dir);
+                ResearchReport.WriteDda(".", all, CountReps(all, x => x.rep), houses, scale, ResearchReport.DdaBotNote);
+                log.AppendLine("laporan: Hasil_Eksperimen_DDA.md (" + all.Count + " rumah dari semua potongan di " + dir + ")");
+            }
+        }
+
+        /// <summary>Susun ulang kedua laporan eksperimen dari data mentah yang tersimpan (tanpa memainkan ulang).</summary>
+        void RebuildReports(int houses, float scale, int learnHouses)
+        {
+            List<DdaRow> all = ResearchReport.LoadDdaRows(Path.Combine("TestOutput", "dda_rows"));
+            if (all.Count > 0) { ResearchReport.WriteDda(".", all, CountReps(all, x => x.rep), houses, scale, ResearchReport.DdaBotNote); log.AppendLine("DDA: " + all.Count + " rumah"); }
+            List<LearnHide> h = new List<LearnHide>(); List<LearnDec> e = new List<LearnDec>();
+            ResearchReport.LoadLearnRows(Path.Combine("TestOutput", "learn_rows"), h, e);
+            if (h.Count + e.Count > 0)
+            {
+                HashSet<int> reps = new HashSet<int>(); foreach (LearnHide x in h) reps.Add(x.rep); foreach (LearnDec x in e) reps.Add(x.rep);
+                ResearchReport.WriteLearning(".", h, e, reps.Count, learnHouses, scale, ResearchReport.LearnD, ResearchReport.LearnConds, ResearchReport.LearnNotes);
+                log.AppendLine("Belajar: " + h.Count + " sembunyi, " + e.Count + " keputusan");
+            }
+        }
+
+        static double AvgEnd(List<DdaRow> l, int houses)
+        {
+            double s = 0; int n = 0;
+            foreach (DdaRow x in l) if (x.house == houses) { s += x.dEnd; n++; }
+            return n > 0 ? s / n : double.NaN;
+        }
+
+        // ------------------------------------------------------------------ eksperimen "hantu belajar"
+        /// <summary>Bot berkebiasaan (85% memilih lemari) vs bot acak, d tetap 0,60; tiap keputusan hantu dibandingkan dengan pilihan acak (LearningProbe).</summary>
+        IEnumerator LearningStudy(int reps, int houses, float scale)
+        {
+            Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0;
+            AutoPilot bot = gm.player.gameObject.AddComponent<AutoPilot>();
+            string[] conds = ResearchReport.LearnConds, notes = ResearchReport.LearnNotes;
+            const float d = ResearchReport.LearnD;
+            List<LearnHide> hides = new List<LearnHide>(); List<LearnDec> decs = new List<LearnDec>();
+            int rFrom = RepFrom(reps), rTo = RepTo(reps);
+            int total = (rTo - rFrom + 1) * conds.Length, done = 0; float t0 = Time.realtimeSinceStartup;
+            for (int r = rFrom; r <= rTo; r++)
+                for (int c = 0; c < conds.Length; c++)
+                {
+                    bot.profile = AutoPilot.Profile.Sedang; bot.habitOn = c == 0; bot.randomHide = c == 1; bot.habitKind = SpotKind.Lemari; bot.habitStrength = 0.85f;
+                    gm.dda.adaptive = false; gm.dda.d = d; gm.dda.P = DDAManager.Target; gm.dda.Ps = DDAManager.Target; gm.dda.Apply();
+                    GhostMemory.Reset(); GhostMemory.feed.Clear(); LearningProbe.Reset(1000 * r + c);
+                    gm.StartStudyHouse(90000 + r * 1000);
+                    yield return Frames(2);
+                    for (int h = 1; h <= houses; h++)
+                    {
+                        float tStart = Time.time;
                         while (true)
                         {
                             Time.timeScale = scale;
-                            if (gm.state == GameManager.State.Won) { result = "LOLOS"; break; }
-                            if (gm.state == GameManager.State.Caught) { result = "TERTANGKAP"; break; }
-                            if (Time.time - t0 > 360f) { result = "TIMEOUT"; break; }
+                            if (gm.state == GameManager.State.Won || gm.state == GameManager.State.Caught) break;
+                            if (Time.time - tStart > HouseLimit) break;
                             yield return null;
                         }
-                        float tt = gm.houseTime;
-                        float[] row = { result == "LOLOS" ? 1 : 0, tt, gm.relicsFound, gm.RelicsNeeded, gm.dda.chasesHouse, gm.dda.hidesHouse, gm.dda.nearMisses, dStart, gm.dda.d, result == "TIMEOUT" ? 1 : 0 };
-                        agg[key].Add(row);
-                        csv.AppendLine(prof + "," + (adaptive ? "DDA" : "Tetap") + "," + (h + 1) + "," + result + "," + tt.ToString("0", CI) + "," + gm.relicsFound + "," + gm.RelicsNeeded + "," + gm.dda.chasesHouse + "," + gm.dda.hidesHouse + "," + gm.dda.nearMisses + "," + dStart.ToString("0.00", CI) + "," + gm.dda.d.ToString("0.00", CI) + "," + floors + "," + spots + "," + batts);
-                        log.AppendLine(key + " rumah " + (h + 1) + ": " + result + " t=" + tt.ToString("0") + " relik " + gm.relicsFound + "/" + gm.RelicsNeeded + " d " + dStart.ToString("0.00") + "->" + gm.dda.d.ToString("0.00"));
-                        if (result == "TIMEOUT" && gm.state == GameManager.State.Playing) gm.dda.OnCaught();   // dianggap gagal
+                        Time.timeScale = 1f;
+                        LearningProbe.EndHouse();
                         yield return Frames(2);
                         gm.NextHouse();
                         yield return Frames(2);
                     }
+                    LearningProbe.EndHouse();
+                    foreach (LearningProbe.HideRec x in LearningProbe.hides) hides.Add(new LearnHide { cond = conds[c], rep = r, house = x.house, index = x.index, rank = x.rank, cand = x.cand, pModel = x.pModel, pUniform = x.pUniform });
+                    foreach (LearningProbe.DecRec x in LearningProbe.decisions) decs.Add(new LearnDec { cond = conds[c], kind = x.kind, rep = r, house = x.house, hitM = x.hitModel, hitR = x.hitRandom });
+                    done++;
+                    float el = Time.realtimeSinceStartup - t0;
+                    Debug.Log("[Eksperimen] belajar " + done + "/" + total + " blok, sembunyi " + LearningProbe.hides.Count + ", keputusan " + LearningProbe.decisions.Count + ", " + el.ToString("0") + " dtk, sisa ~" + (el / done * (total - done)).ToString("0") + " dtk");
+                    log.AppendLine(conds[c] + " replikasi " + r + ": sembunyi " + LearningProbe.hides.Count + ", keputusan hadang/jaga " + LearningProbe.decisions.Count);
                 }
             Time.timeScale = 1f;
-            Directory.CreateDirectory("TestOutput");
-            File.WriteAllText("TestOutput/dda_experiment.csv", csv.ToString()); File.WriteAllText("Hasil_Eksperimen_DDA.csv", csv.ToString());
-            StringBuilder md = new StringBuilder();
-            md.AppendLine("# Hasil Eksperimen DDA - Haunted House: Hantu yang Mempelajari Ketakutanmu");
-            md.AppendLine();
-            md.AppendLine("Dibuat otomatis oleh `Tools > Hantu Belajar > Uji > Eksperimen DDA` (" + housesPerBlock + " rumah per blok, bot AutoPilot memainkan game sungguhan, skala waktu x" + scale + "). Tiap blok mulai dari d = 0,40, memori hantu dikosongkan, dan seed rumah sama untuk kondisi **DDA** maupun **Tetap** (d = 0,40 sepanjang blok).");
-            md.AppendLine();
-            md.AppendLine("Profil bot: **Pro** (tenang, jongkok saat hantu dekat, memilih tempat sembunyi yang jarang dipakai), **Sedang** (tempat sembunyi terdekat), **Lemah** (sering berlari, reaksi lambat, selalu kembali ke tempat sembunyi favorit).");
-            md.AppendLine();
-            md.AppendLine("| Profil | Kondisi | Lolos | Waktu rata2 (dtk) | Relik rata2 | Dikejar rata2 | Sembunyi rata2 | d akhir | Timeout |");
-            md.AppendLine("|---|---|---|---|---|---|---|---|---|");
-            foreach (var kv in agg)
+            string dir = RowsDir("learn_rows", rFrom, rTo, reps);
+            File.WriteAllText(Path.Combine(dir, "r" + rFrom + "-" + rTo + ".csv"), ResearchReport.LearnCsv(hides, decs));
+            List<LearnHide> allH = new List<LearnHide>(); List<LearnDec> allD = new List<LearnDec>();
+            ResearchReport.LoadLearnRows(dir, allH, allD);
+            HashSet<int> repSet = new HashSet<int>(); foreach (LearnHide x in allH) repSet.Add(x.rep); foreach (LearnDec x in allD) repSet.Add(x.rep);
+            ResearchReport.WriteLearning(".", allH, allD, repSet.Count, houses, scale, d, conds, notes);
+            log.AppendLine("laporan: Hasil_Eksperimen_Belajar.md (" + allH.Count + " sembunyi, " + allD.Count + " keputusan dari semua potongan); waktu " + (Time.realtimeSinceStartup - t0).ToString("0") + " dtk");
+        }
+
+        // ------------------------------------------------------------------ uji alur uji coba pemain (peserta simulasi)
+        /// <summary>
+        /// Peserta bot menjalani alur uji coba sungguhan lewat tombol UI: pengaturan -> panduan -> latihan -> sesi A -> kuesioner -> sesi B -> kuesioner -> perbandingan.
+        /// Jawaban kuesioner acak (berbenih). Data ditulis ke TestOutput/DataUjiCobaSim lalu dianalisis (laporan berlabel SIMULASI).
+        /// </summary>
+        IEnumerator PlaytestSim(int participants, float sessionMinutes, float scale)
+        {
+            string simRoot = Path.Combine("TestOutput", "DataUjiCobaSim");
+            if (Directory.Exists(simRoot)) Directory.Delete(simRoot, true);
+            Playtest.RootOverride = Path.GetFullPath(simRoot);
+            PlayerPrefs.SetInt("HB_SaveHouse", 7); PlayerPrefs.SetString("HB_HintsShown", "goal,map"); PlayerPrefs.Save();
+            string memBefore = PlayerPrefs.GetString("HB_GhostMemory2", "");
+            AutoPilot bot = gm.player.gameObject.AddComponent<AutoPilot>(); bot.profile = AutoPilot.Profile.Sedang;
+            System.Random ans = new System.Random(77);
+            Directory.CreateDirectory("TestOutput/shots/ujicoba");
+            for (int k = 1; k <= participants; k++)
             {
-                List<float[]> rows = kv.Value; int n = rows.Count; if (n == 0) continue;
-                float win = 0, t = 0, rel = 0, ch = 0, hd = 0, dEnd = 0, to = 0;
-                foreach (float[] r in rows) { win += r[0]; t += r[1]; rel += r[2] / Mathf.Max(1f, r[3]); ch += r[4]; hd += r[5]; to += r[9]; }
-                dEnd = rows[n - 1][8];
-                string[] parts = kv.Key.Split('|');
-                md.AppendLine("| " + parts[0] + " | " + parts[1] + " | " + win + "/" + n + " (" + Mathf.RoundToInt(win * 100f / n) + "%) | " + (t / n).ToString("0", CI) + " | " + Mathf.RoundToInt(rel * 100f / n) + "% | " + (ch / n).ToString("0.0", CI) + " | " + (hd / n).ToString("0.0", CI) + " | " + dEnd.ToString("0.00", CI) + " | " + to + " |");
+                gm.BackToMenu(); yield return Real(0.4f);
+                Check("P" + k + ": tombol UJI COBA PEMAIN ada di menu utama", Click("Playtest")); yield return Real(0.4f);
+                if (k == 1) Capture("ujicoba/u1_pengaturan", gm.player.cam, true);
+                bool startOk = Click("PtStart"); yield return Real(0.4f);
+                Check("P" + k + ": mulai uji coba (pencatatan aktif di folder P" + k.ToString("00") + ")", startOk && Telemetry.On && Telemetry.Participant == "P" + k.ToString("00"));
+                Playtest.I.sessionMinutes = sessionMinutes; Playtest.I.practiceMinutes = Mathf.Max(0.5f, sessionMinutes * 0.5f);
+                Check("P" + k + ": panduan bermain muncul dulu", gm.ui.GuideOpen);
+                Click("GuideSkip");
+                for (float w = 0f; w < 4f && !gm.Playing; w += 0.1f) yield return Real(0.1f);
+                Check("P" + k + ": latihan berjalan dengan panduan awal", Playtest.I.phase == Playtest.Phase.Latihan && gm.Playing && gm.ui.hud.TutorialActive);
+                // latihan, sesi A, sesi B (bot bermain; layar antar sesi diklik)
+                int qDone = 0;
+                float limit = Time.realtimeSinceStartup + 600f;
+                while (Playtest.Active && Time.realtimeSinceStartup < limit)
+                {
+                    Time.timeScale = gm.Playing ? scale : 1f;
+                    if (gm.state == GameManager.State.Won || gm.state == GameManager.State.Caught)
+                    {
+                        if (k == 1 && qDone == 0 && Playtest.I.phase == Playtest.Phase.SesiA) { Time.timeScale = 1f; yield return Real(0.4f); Capture("ujicoba/u2_akhir_rumah", gm.player.cam, true); }
+                        Time.timeScale = 1f; yield return Real(0.2f);
+                        Click("Primary");
+                    }
+                    else if (gm.ui.playtest.AnyOpen)
+                    {
+                        Time.timeScale = 1f;
+                        yield return Real(0.3f);
+                        if (Find("PtQuestNext"))
+                        {
+                            if (k == 1 && qDone == 0) Capture("ujicoba/u3_kuesioner_kosong", gm.player.cam, true);
+                            for (int i = 0; i < 8; i++) gm.ui.playtest.AnswerQ(i, 1 + ans.Next(5));
+                            yield return Real(0.2f);
+                            if (k == 1 && qDone == 0) Capture("ujicoba/u4_kuesioner_terisi", gm.player.cam, true);
+                            Click("PtQuestNext"); qDone++;
+                        }
+                        else if (Find("PtCompareNext"))
+                        {
+                            for (int i = 0; i < 3; i++) gm.ui.playtest.AnswerC(i, ans.Next(3));
+                            yield return Real(0.2f);
+                            if (k == 1) Capture("ujicoba/u5_perbandingan", gm.player.cam, true);
+                            Click("PtCompareNext");
+                        }
+                        else if (Find("PtInfoNext"))
+                        {
+                            if (k == 1) Capture("ujicoba/u6_jeda_" + qDone, gm.player.cam, true);
+                            Click("PtInfoNext");
+                        }
+                    }
+                    yield return null;
+                }
+                Time.timeScale = 1f;
+                yield return Real(0.4f);
+                if (k == 1) Capture("ujicoba/u7_selesai", gm.player.cam, true);
+                string dir = Path.Combine(simRoot, "P" + k.ToString("00"));
+                Check("P" + k + ": alur selesai (kuesioner " + qDone + "x)", !Playtest.Active && qDone == 2 && Find("PtDoneMenu"));
+                Check("P" + k + ": rumah.csv berisi sesi A & B", File.Exists(Path.Combine(dir, "rumah.csv")) && File.ReadAllText(Path.Combine(dir, "rumah.csv")).Contains("SESI A") && File.ReadAllText(Path.Combine(dir, "rumah.csv")).Contains("SESI B"));
+                Check("P" + k + ": kuesioner.csv 2 baris + perbandingan.csv 1 baris", File.Exists(Path.Combine(dir, "kuesioner.csv")) && File.ReadAllLines(Path.Combine(dir, "kuesioner.csv")).Length == 3 &&
+                      File.Exists(Path.Combine(dir, "perbandingan.csv")) && File.ReadAllLines(Path.Combine(dir, "perbandingan.csv")).Length == 2);
+                Check("P" + k + ": urutan diseimbangkan (" + (k % 2 == 1 ? "DDA dulu" : "Tetap dulu") + ")", File.Exists(Path.Combine(dir, "info.txt")) && File.ReadAllText(Path.Combine(dir, "info.txt")).Contains(k % 2 == 1 ? "A=DDA" : "A=Tetap"));
+                Check("P" + k + ": simpanan & memori pemilik game dikembalikan", PlayerPrefs.GetInt("HB_SaveHouse", 0) == 7 && PlayerPrefs.GetString("HB_GhostMemory2", "") == memBefore && PlayerPrefs.GetString("HB_HintsShown", "") == "goal,map");
+                Click("PtDoneMenu"); yield return Real(0.3f);
             }
-            md.AppendLine();
-            md.AppendLine("## Ringkasan");
-            foreach (string prof in new[] { "Pro", "Sedang", "Lemah" })
-            {
-                if (!agg.ContainsKey(prof + "|DDA") || !agg.ContainsKey(prof + "|Tetap")) continue;
-                List<float[]> a1 = agg[prof + "|DDA"], a2 = agg[prof + "|Tetap"];
-                float w1 = 0, w2 = 0, dm = 0; foreach (float[] r in a1) { w1 += r[0]; dm += r[8]; } foreach (float[] r in a2) w2 += r[0];
-                dm /= Mathf.Max(1, a1.Count);
-                float dEnd = a1.Count > 0 ? a1[a1.Count - 1][8] : 0.4f;
-                md.AppendLine("- **" + prof + "**: dengan DDA kesulitan bergerak dari 0.40 ke " + dEnd.ToString("0.00", CI) + " (rata-rata " + dm.ToString("0.00", CI) + "); lolos " + w1 + "/" + a1.Count + " vs " + w2 + "/" + a2.Count + " tanpa DDA.");
-            }
-            md.AppendLine();
-            md.AppendLine("Interpretasi: setelah tertangkap DDA menurunkan kesulitan (hantu lebih lambat & kurang peka, rumah berikutnya lebih kecil dengan lebih banyak tempat sembunyi & baterai) dan setelah lolos menaikkannya. Dengan " + housesPerBlock + " rumah per blok, selisih tingkat lolos antara kondisi DDA dan Tetap masih dalam variasi acak; tabel ini menunjukkan arah adaptasi kesulitan, belum bukti statistik. Tambah jumlah rumah per blok (HB_HOUSES) dan lakukan playtest manusia untuk laporan final.");
-            md.AppendLine();
-            md.AppendLine("Data per rumah: `Hasil_Eksperimen_DDA.csv`.");
-            File.WriteAllText("Hasil_Eksperimen_DDA.md", md.ToString());
-            log.AppendLine(md.ToString());
+            string md = ResearchReport.AnalyzePlaytest(new[] { simRoot }, "TestOutput", "Hasil_Uji_Coba_SIMULASI.md", "sim_", true);
+            Check("analisis: laporan uji coba tersusun untuk " + participants + " peserta", md.Contains("Peserta lengkap: **" + participants + "**") && File.Exists("TestOutput/Analisis/sim_kuesioner.svg"));
+            Playtest.RootOverride = null;
+            PlayerPrefs.DeleteKey("HB_SaveHouse"); PlayerPrefs.DeleteKey("HB_HintsShown"); PlayerPrefs.Save();
+        }
+
+        bool Find(string buttonName)
+        {
+            foreach (UnityEngine.UI.Button b in gm.ui.GetComponentsInChildren<UnityEngine.UI.Button>(false))
+                if (b.name == buttonName && b.gameObject.activeInHierarchy) return true;
+            return false;
         }
 
         // ------------------------------------------------------------------ alur pemain (menu -> main -> jeda -> menang -> menu)

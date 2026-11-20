@@ -22,6 +22,7 @@ namespace HantuBelajar
         public float houseTime, timeSinceProgress, houseStartD, expectedRelicTime = 45f, evalT;
         public int caughtTotal, winsTotal, relicsTotal, housesPlayed, evals, nearMisses, chasesHouse, hidesHouse;
         public float chaseTimeHouse, hideTimeHouse;
+        public float sumP; public int nP;     // rata-rata indikator performa P per rumah (untuk laporan eksperimen & uji coba)
         float winChase, winHide, winTime; int winNear; bool nearFlag;
         public readonly List<string> log = new List<string>();
 
@@ -34,6 +35,7 @@ namespace HantuBelajar
         {
             houseStartD = d; houseTime = 0f; timeSinceProgress = 0f; evalT = 0f;
             winChase = winHide = winTime = 0f; winNear = 0; nearMisses = 0; chasesHouse = 0; hidesHouse = 0; chaseTimeHouse = 0f; hideTimeHouse = 0f;
+            sumP = 0f; nP = 0;
             expectedRelicTime = 30f + 0.45f * L.freeCells;
             housesPlayed++;
             Apply();
@@ -66,13 +68,14 @@ namespace HantuBelajar
             calm = 1f - Mathf.Clamp01(winHide / Mathf.Max(1f, winTime) * 1.6f);
             P = Mathf.Clamp01(0.35f * pace + 0.30f * safety + 0.15f * resource + 0.20f * calm - 0.08f * winNear);
             Ps = Mathf.Lerp(Ps, P, 0.5f);
-            evals++;
+            evals++; sumP += P; nP++;
             float old = d;
             if (adaptive)
             {
                 d = Mathf.Clamp(d + (Ps - Target) * Rate, Mathf.Max(0.05f, houseStartD - MaxDrop), Mathf.Min(0.95f, houseStartD + MaxRise));
                 Apply();
             }
+            Telemetry.Event("dda", "P " + P.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + " Ps " + Ps.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + " d " + d.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture));
             Log("P=" + P.ToString("0.00") + " (halus " + Ps.ToString("0.00") + ") -> d " + old.ToString("0.00") + " => " + d.ToString("0.00") + (Ps > Target + 0.03f ? "  pemain unggul" : Ps < Target - 0.03f ? "  pemain tertekan" : "  seimbang"));
             evalT = 0f; winChase = winHide = winTime = 0f; winNear = 0;
         }
@@ -81,8 +84,8 @@ namespace HantuBelajar
         public void OnProgress() { timeSinceProgress = Mathf.Min(timeSinceProgress, expectedRelicTime * 0.5f); }
         public void OnCaught() { caughtTotal++; Shift(EvCaught, "pemain tertangkap"); Ps = Mathf.Min(Ps, Target - 0.1f); }
         public void OnWin() { winsTotal++; Shift(EvWin, "pemain lolos"); }
-        public void OnChaseStart() { chasesHouse++; }
-        public void OnHide() { hidesHouse++; }
+        public void OnChaseStart() { chasesHouse++; Telemetry.Event("dikejar", ""); }
+        public void OnHide() { hidesHouse++; Telemetry.Event("sembunyi", ""); }
         public void OnNearMiss() { nearMisses++; winNear++; }
         public void OnNoise(float level) { }
         public void Force(float delta) { Shift(delta, "manual (F2/F3)", true); }

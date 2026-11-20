@@ -26,6 +26,9 @@
 # hasil uji / rekaman lokal
 /TestOutput/
 
+# data uji coba pemain (berisi jawaban peserta; simpan terpisah)
+/DataUjiCoba/
+
 # Paket Asset Store (lisensi Asset Store EULA - import sendiri dari My Assets)
 /Assets/_3DStealthGame/
 /Assets/_3DStealthGame.meta

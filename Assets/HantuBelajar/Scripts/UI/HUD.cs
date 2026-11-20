@@ -220,6 +220,12 @@ namespace HantuBelajar
             if (urgent) hintQueue.Insert(0, h); else hintQueue.Add(h);
         }
 
+        public void ReloadShownHints()
+        {
+            shownHints.Clear();
+            foreach (string id in PlayerPrefs.GetString("HB_HintsShown", "").Split(',')) if (id.Length > 0) shownHints.Add(id);
+        }
+
         public static void ResetHints()
         {
             PlayerPrefs.DeleteKey("HB_HintsShown"); PlayerPrefs.DeleteKey("HB_TutDone"); PlayerPrefs.DeleteKey("HB_GuideSeen"); PlayerPrefs.Save();
@@ -255,8 +261,8 @@ namespace HantuBelajar
             float dt = Time.unscaledDeltaTime;
             if (gm.Playing)
             {
-                if (Input.GetKeyDown(KeyCode.F1)) { present = !present; showDebug = present; Toast(present ? "Mode presentasi" : "Mode presentasi dimatikan", present ? "Panel PCG / DDA / AI, keadaan hantu & heatmap jalur di peta" : null); }
-                if (Input.GetKeyDown(KeyCode.Tab)) showDebug = !showDebug;
+                if (Input.GetKeyDown(KeyCode.F1) && !Playtest.Active) { present = !present; showDebug = present; Toast(present ? "Mode presentasi" : "Mode presentasi dimatikan", present ? "Panel PCG / DDA / AI, keadaan hantu & heatmap jalur di peta" : null); }
+                if (Input.GetKeyDown(KeyCode.Tab) && !Playtest.Active) showDebug = !showDebug;
                 if (Input.GetKeyDown(KeyCode.M)) map.ToggleFull();
             }
             map.present = present;
@@ -277,7 +283,7 @@ namespace HantuBelajar
             if (hasLock) keySlot.color = !gm.house.lockedDoor.locked ? new Color(1f, 1f, 1f, 0.22f) : p.hasKey ? new Color(1f, 0.45f, 0.38f) : new Color(1f, 1f, 1f, 0.16f);
             string dist = g.kind != Guidance.Kind.None && Settings.Compass ? "   <color=#ffcc73>" + Mathf.RoundToInt(g.distance) + " m</color>" : "";
             objText.text = (g.text.Length > 0 ? g.text : "Jelajahi rumah") + dist;
-            objMeta.text = L.FloorName(p.floor).ToUpper() + "   ·   RUMAH #" + gm.houseNo + (present ? "   ·   DDA " + gm.dda.Label + " " + Mathf.RoundToInt(gm.dda.d * 100f) + "%" : "");
+            objMeta.text = Playtest.Active ? Playtest.I.TimerText() + "   ·   " + L.FloorName(p.floor).ToUpper() : L.FloorName(p.floor).ToUpper() + "   ·   RUMAH #" + gm.houseNo + (present ? "   ·   DDA " + gm.dda.Label + " " + Mathf.RoundToInt(gm.dda.d * 100f) + "%" : "");
 
             // senter & stamina
             bool lightOn = p.flashOn && p.battery > 0f && !p.hidden;

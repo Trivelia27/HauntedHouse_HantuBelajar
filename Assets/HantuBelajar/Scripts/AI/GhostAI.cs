@@ -365,7 +365,7 @@ namespace HantuBelajar
             if (Random.value < D.learnWeight)
             {
                 HidingSpot s = PickGuardSpot(searchCenter, 6);
-                if (s != null) { BeginGuard(s, "Curiga kamu bersembunyi di sekitar sini -> berjaga dekat " + s.KindName + " #" + s.id + " (E[theta] = " + GhostMemory.Mean(s).ToString("0.00") + ")"); return; }
+                if (s != null) { LearningProbe.OnGuard(L, H, s, searchCenter, 6, pl); BeginGuard(s, "Curiga kamu bersembunyi di sekitar sini -> berjaga dekat " + s.KindName + " #" + s.id + " (E[theta] = " + GhostMemory.Mean(s).ToString("0.00") + ")"); return; }
             }
             PickPatrol();
         }
@@ -416,6 +416,7 @@ namespace HantuBelajar
             if (!towardPlayer && r > D.explore && Random.value < D.learnWeight && GhostMemory.PickAmbush(L, Mathf.Lerp(0.6f, 0.15f, D.learnWeight), out Vector3Int amb, out float share))
             {
                 SetPathTo(amb); linger = Random.Range(4f, 7f);
+                LearningProbe.OnAmbush(L, amb);
                 SetState(GhostState.Hadang, "Menghadang di jalur favoritmu (" + L.FloorName(amb.z) + ", panas " + (share * 100f).ToString("0") + "%)");
                 return;
             }
@@ -423,7 +424,7 @@ namespace HantuBelajar
             {
                 // berjaga dekat tempat sembunyi favorit (kebiasaan lintas rumah + rumah ini)
                 HidingSpot fav = PickGuardSpot(default, 0);
-                if (fav != null && GhostMemory.Mean(fav) >= 0.45f) { BeginGuard(fav, "Berjaga dekat tempat sembunyi favoritmu: " + fav.KindName + " #" + fav.id + " (E[theta] = " + GhostMemory.Mean(fav).ToString("0.00") + ")"); return; }
+                if (fav != null && GhostMemory.Mean(fav) >= 0.45f) { LearningProbe.OnGuard(L, H, fav, default, 0, pl); BeginGuard(fav, "Berjaga dekat tempat sembunyi favoritmu: " + fav.KindName + " #" + fav.id + " (E[theta] = " + GhostMemory.Mean(fav).ToString("0.00") + ")"); return; }
             }
             if (towardPlayer && !pl.hidden)
             {

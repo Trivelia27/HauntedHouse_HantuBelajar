@@ -155,9 +155,16 @@ namespace HantuBelajar
             if (!TestMode)
             {
                 ui.SetFade(1f); ui.FadeTo(0f, 0.9f);
-                ui.ShowIntro("RUMAH #" + houseNo, new[] { layout.floors > 1 ? "2 LANTAI" : "1 LANTAI", RelicsNeeded + " RELIK", layout.lockedRoom >= 0 ? "RUANG DIGEMBOK" : null, "KESULITAN " + dda.Label }, 4.2f);
+                if (Playtest.Active)
+                    ui.ShowIntro(Playtest.I.SessionLabel, new[] { "RUMAH " + (Playtest.I.housesInPhase + 1), layout.floors > 1 ? "2 LANTAI" : "1 LANTAI", RelicsNeeded + " RELIK", layout.lockedRoom >= 0 ? "RUANG DIGEMBOK" : null }, 3.6f);
+                else
+                    ui.ShowIntro("RUMAH #" + houseNo, new[] { layout.floors > 1 ? "2 LANTAI" : "1 LANTAI", RelicsNeeded + " RELIK", layout.lockedRoom >= 0 ? "RUANG DIGEMBOK" : null, "KESULITAN " + dda.Label }, 4.2f);
             }
-            ui.hud.BeginHouse(!TestMode && !HUD.TutDone, houseNo == 1);
+            bool studyTut = Playtest.Active && Playtest.I.phase == Playtest.Phase.Latihan;
+            ui.hud.BeginHouse(Playtest.Active ? studyTut : !TestMode && !HUD.TutDone, Playtest.Active ? studyTut : houseNo == 1);
+            if (Playtest.Active) Playtest.I.OnHouseStarted();
+            LearningProbe.BeginHouse(houseNo);
+            Telemetry.HouseStart(this);
         }
 
         public void Pause()
@@ -181,6 +188,7 @@ namespace HantuBelajar
 
         public void ToMenu()
         {
+            if (Playtest.Active) Playtest.I.Abort();
             SaveProgress();
             player.ForceUnhide();
             EnterMenu();
@@ -212,6 +220,8 @@ namespace HantuBelajar
                 case State.Playing:
                     houseTime += Time.deltaTime;
                     if (!player.hidden) GhostMemory.RecordPos(layout, player.node, Time.deltaTime);   // jalur yang dilalui, bukan tempat diam bersembunyi
+                    Telemetry.Tick(this, Time.deltaTime);
+                    LearningProbe.Tick(player);
                     if (Input.GetKeyDown(KeyCode.Escape) && !TestMode) { Pause(); break; }
                     if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked && !TestMode) Lock(true);
                     DevKeys();
@@ -231,6 +241,7 @@ namespace HantuBelajar
 
         void DevKeys()
         {
+            if (Playtest.Active) return;
             if (Input.GetKeyDown(KeyCode.G)) { NewHouse(seed + 1); Toast("PCG: rumah baru seed " + seed + " (" + layout.rooms.Count + " ruang, " + layout.floors + " lantai)"); }
             if (Input.GetKeyDown(KeyCode.F2)) { dda.Force(-0.15f); Toast("DDA: kesulitan turun -> " + dda.Label + " (d=" + dda.d.ToString("0.00") + ")"); }
             if (Input.GetKeyDown(KeyCode.F3)) { dda.Force(+0.15f); Toast("DDA: kesulitan naik -> " + dda.Label + " (d=" + dda.d.ToString("0.00") + ")"); }
@@ -252,6 +263,7 @@ namespace HantuBelajar
             relicsFound++;
             dda.OnRelic();
             AudioDirector.I.Pickup();
+            Telemetry.Event("relik", (relicsFound) + "/" + RelicsNeeded);
             Toast("Relik " + relicsFound + " / " + RelicsNeeded + "  ·  " + RelicPickup.Names[r.index % RelicPickup.Names.Length], RelicPickup.Lore[r.index % RelicPickup.Lore.Length], "relic");
             if (relicsFound >= RelicsNeeded)
             {
@@ -259,10 +271,11 @@ namespace HantuBelajar
                 Toast("Semua relik terkumpul!", "Pintu keluar terbuka - ikuti kompas ke lantai 1", "exit", UIKit.Good);
             }
         }
-        public void OnKey() { dda.OnProgress(); Toast("Kunci tua didapat", "Cari pintu yang digembok - ikon gembok ada di peta (M)", "key"); }
+        public void OnKey() { dda.OnProgress(); Telemetry.Event("kunci", ""); Toast("Kunci tua didapat", "Cari pintu yang digembok - ikon gembok ada di peta (M)", "key"); }
         public void OnUnlock()
         {
             layout.lockedKeys.Clear();     // graf jalur pemain kini melewati pintu yang sudah terbuka
+            Telemetry.Event("gembok_terbuka", "");
             dda.OnProgress();
             Toast("Gembok terbuka", null, "lock", UIKit.Good);
         }
@@ -273,6 +286,8 @@ namespace HantuBelajar
             player.ForceUnhide();
             state = State.Won;
             dda.OnWin();
+            Telemetry.HouseEnd(this, "lolos");
+            LearningProbe.EndHouse();
             AudioDirector.I.Win();
             endReason = "Kamu berhasil kabur dari rumah #" + houseNo + ".";
             ui.ShowEnd(true, endReason, Stats(true));
@@ -295,6 +310,8 @@ namespace HantuBelajar
         void FinishCatch()
         {
             dda.OnCaught();
+            Telemetry.HouseEnd(this, "tertangkap");
+            LearningProbe.EndHouse();
             state = State.Caught;
             player.cam.transform.localPosition = Vector3.zero;
             player.ForceUnhide();
@@ -315,6 +332,30 @@ namespace HantuBelajar
                        (dda.d > dAtStart + 0.005f ? "   -   hantu makin peka dan cepat" : dda.d < dAtStart - 0.005f ? "   -   hantu lebih lambat dan kurang peka" : "   -   tingkat kesulitan tetap"),
             };
         }
+
+        // ------------------------------------------------------------------ mode uji coba pemain (penelitian)
+        public void StartStudyHouse(int firstSeed) { houseNo = 0; seed = firstSeed; NextHouseInternal(); }
+
+        /// <summary>Tombol utama layar akhir rumah: rumah berikutnya, atau alur uji coba bila sedang berjalan.</summary>
+        public void EndScreenContinue() { if (Playtest.Active) Playtest.I.Continue(); else NextHouse(); }
+
+        /// <summary>Rumah dihentikan mode uji coba (waktu sesi habis / dibatalkan): catat bila rumah masih berjalan.</summary>
+        public void EndHouseForStudy(string result)
+        {
+            if (state == State.Playing || state == State.Paused || state == State.Catching) { Telemetry.HouseEnd(this, result); LearningProbe.EndHouse(); }
+        }
+
+        /// <summary>Hentikan permainan untuk layar uji coba (kuesioner / jeda).</summary>
+        public void EnterStudyScreen()
+        {
+            state = State.Menu; Time.timeScale = 1f; AudioListener.pause = false;
+            player.ForceUnhide(); player.inputLocked = false; ghost.gameObject.SetActive(false);
+            ui.HideAll(); ui.hud.SetVisible(false);
+            AudioDirector.I.SetMode(AudioDirector.Mode.Menu);
+            Lock(false);
+        }
+
+        public void BackToMenu() { EnterMenu(); }
 
         /// <summary>Notifikasi peristiwa di HUD (antre, tanpa menimpa pesan lain). icon = nama ikon Icons, tint = warna ikon.</summary>
         public void Toast(string s, string sub = null, string icon = "info", Color? tint = null) { if (ui != null) ui.hud.Toast(s, sub, icon, tint); }
@@ -344,7 +385,7 @@ namespace HantuBelajar
         // ------------------------------------------------------------------ simpan
         void SaveProgress()
         {
-            if (TestMode) return;
+            if (TestMode || Playtest.Active) return;
             PlayerPrefs.SetInt("HB_SaveHouse", houseNo);
             PlayerPrefs.SetFloat("HB_SaveD", dda.d);
             PlayerPrefs.SetInt("HB_SaveSeed", seed);

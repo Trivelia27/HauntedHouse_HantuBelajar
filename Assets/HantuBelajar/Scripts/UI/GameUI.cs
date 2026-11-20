@@ -17,6 +17,7 @@ namespace HantuBelajar
     public class GameUI : MonoBehaviour
     {
         public HUD hud;
+        public PlaytestUI playtest;
         public Canvas canvas;
         GameObject mainMenu, pauseMenu, settingsMenu, guideMenu, endMenu, introCard;
         Image fade; float fadeTarget, fadeSpeed = 2f;
@@ -29,6 +30,7 @@ namespace HantuBelajar
         // pengaturan
         GameObject[] tabPages; UIHover[] tabs;
         // akhir
+        GameObject endDda, endMenuBtn; RectTransform endPrimaryRt;
         Image endIcon, ddaFill; Text endTitle, endReason, endTrend, endNext, endPrimaryText; readonly Text[] statVal = new Text[4]; RectTransform ddaFrom, ddaTo;
         // intro
         Text introTitle; RectTransform introChips; CanvasGroup introCg; float introT, introAge;
@@ -36,7 +38,7 @@ namespace HantuBelajar
         public bool GuideOpen { get { return guideMenu != null && guideMenu.activeSelf; } }
         /// <summary>Judul "RUMAH #N" masih tampil (notifikasi & petunjuk ditahan sampai judul memudar).</summary>
         public bool IntroActive { get { return introCard != null && introCard.activeSelf && introT > 0.7f; } }
-        public bool AnyMenu { get { return mainMenu.activeSelf || pauseMenu.activeSelf || settingsMenu.activeSelf || guideMenu.activeSelf || endMenu.activeSelf; } }
+        public bool AnyMenu { get { return mainMenu.activeSelf || pauseMenu.activeSelf || settingsMenu.activeSelf || guideMenu.activeSelf || endMenu.activeSelf || (playtest != null && playtest.AnyOpen); } }
 
         public static GameUI Create()
         {
@@ -59,6 +61,8 @@ namespace HantuBelajar
             hud = gameObject.AddComponent<HUD>();
             hud.Build(transform);
             BuildMain(); BuildPause(); BuildSettings(); BuildGuide(); BuildEnd(); BuildIntro();
+            playtest = gameObject.AddComponent<PlaytestUI>();
+            playtest.Build(transform);         // layar mode uji coba pemain (penelitian)
             hud.BuildOverlay(transform);       // notifikasi di atas menu (umpan balik tombol pengaturan)
             fade = UIKit.Fill(transform, "Fade", Color.black);
             fade.raycastTarget = false;
@@ -93,8 +97,9 @@ namespace HantuBelajar
             Button nb = UIKit.MakeButton(m, "New", "MULAI BARU", an, Vector2.zero, sz, () => GameManager.I.StartNew(), 34, BtnStyle.Menu, null, pv);
             Button gb = UIKit.MakeButton(m, "HowTo", "PANDUAN BERMAIN", an, Vector2.zero, sz, () => ShowGuide(false, ShowMain), 34, BtnStyle.Menu, null, pv);
             Button sb = UIKit.MakeButton(m, "Settings", "PENGATURAN", an, Vector2.zero, sz, () => ShowSettings(ShowMain), 34, BtnStyle.Menu, null, pv);
+            Button ptb = UIKit.MakeButton(m, "Playtest", "UJI COBA PEMAIN", an, Vector2.zero, sz, () => playtest.ShowSetup(), 34, BtnStyle.Menu, null, pv);
             Button qb = UIKit.MakeButton(m, "Quit", "KELUAR", an, Vector2.zero, sz, () => GameManager.I.Quit(), 34, BtnStyle.Menu, null, pv);
-            mainButtons = new[] { (RectTransform)continueBtn.transform, (RectTransform)nb.transform, (RectTransform)gb.transform, (RectTransform)sb.transform, (RectTransform)qb.transform };
+            mainButtons = new[] { (RectTransform)continueBtn.transform, (RectTransform)nb.transform, (RectTransform)gb.transform, (RectTransform)sb.transform, (RectTransform)ptb.transform, (RectTransform)qb.transform };
             // kartu memori hantu
             RectTransform card = UIKit.Card(m, "Memory", new Vector2(1f, 0f), new Vector2(-72f, 84f), new Vector2(500f, 200f), new Vector2(1f, 0f));
             UIKit.Icon(card, "I", "ghost", new Vector2(0f, 1f), new Vector2(22f, -18f), 34f, UIKit.Gold, new Vector2(0f, 1f));
@@ -400,6 +405,7 @@ namespace HantuBelajar
                 UIKit.Label(c, "L", labels[i], 16, TextAnchor.LowerCenter, new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(230f, 24f), UIKit.Faint, FontKind.Head, new Vector2(0.5f, 0f));
             }
             RectTransform d = UIKit.Card(m, "Dda", new Vector2(0.5f, 0.5f), new Vector2(0f, -146f), new Vector2(1020f, 178f));
+            endDda = d.gameObject;
             UIKit.Label(d, "T", "KESULITAN (DDA)", 18, TextAnchor.UpperLeft, new Vector2(0f, 1f), new Vector2(30f, -20f), new Vector2(400f, 26f), UIKit.Gold, FontKind.Head, new Vector2(0f, 1f));
             endTrend = UIKit.Label(d, "Trend", "", 22, TextAnchor.UpperRight, new Vector2(1f, 1f), new Vector2(-30f, -16f), new Vector2(640f, 30f), UIKit.Ink, FontKind.Body, new Vector2(1f, 1f));
             RectTransform bar = UIKit.Bar(d, "Bar", new Vector2(0.5f, 1f), new Vector2(0f, -70f), new Vector2(960f, 10f), UIKit.Accent, out ddaFill, new Vector2(0.5f, 1f));
@@ -408,9 +414,10 @@ namespace HantuBelajar
             UIKit.Label(d, "Lo", "MUDAH", 15, TextAnchor.UpperLeft, new Vector2(0f, 1f), new Vector2(30f, -88f), new Vector2(200f, 22f), UIKit.Faint, FontKind.Head, new Vector2(0f, 1f));
             UIKit.Label(d, "Hi", "MIMPI BURUK", 15, TextAnchor.UpperRight, new Vector2(1f, 1f), new Vector2(-30f, -88f), new Vector2(200f, 22f), UIKit.Faint, FontKind.Head, new Vector2(1f, 1f));
             endNext = UIKit.Label(d, "Next", "", 19, TextAnchor.UpperLeft, new Vector2(0f, 0f), new Vector2(30f, 46f), new Vector2(960f, 30f), UIKit.Dim, FontKind.Body, new Vector2(0f, 1f));
-            Button pb = UIKit.MakeButton(m, "Primary", "RUMAH BERIKUTNYA", new Vector2(0.5f, 0.5f), new Vector2(-190f, -334f), new Vector2(420f, 70f), () => GameManager.I.NextHouse(), 26, BtnStyle.Primary);
+            Button pb = UIKit.MakeButton(m, "Primary", "RUMAH BERIKUTNYA", new Vector2(0.5f, 0.5f), new Vector2(-190f, -334f), new Vector2(420f, 70f), () => GameManager.I.EndScreenContinue(), 26, BtnStyle.Primary);
             endPrimaryText = pb.transform.Find("Text").GetComponent<Text>();
-            UIKit.MakeButton(m, "Menu", "MENU UTAMA", new Vector2(0.5f, 0.5f), new Vector2(200f, -334f), new Vector2(300f, 70f), () => GameManager.I.ToMenu(), 24, BtnStyle.Secondary);
+            endPrimaryRt = (RectTransform)pb.transform;
+            endMenuBtn = UIKit.MakeButton(m, "Menu", "MENU UTAMA", new Vector2(0.5f, 0.5f), new Vector2(200f, -334f), new Vector2(300f, 70f), () => GameManager.I.ToMenu(), 24, BtnStyle.Secondary).gameObject;
         }
 
         // ------------------------------------------------------------------ kartu intro
@@ -428,6 +435,7 @@ namespace HantuBelajar
         public void HideAll()
         {
             mainMenu.SetActive(false); pauseMenu.SetActive(false); settingsMenu.SetActive(false); guideMenu.SetActive(false); endMenu.SetActive(false); introCard.SetActive(false);
+            if (playtest != null) playtest.HideAll();
         }
 
         public void ShowMain()
@@ -479,6 +487,11 @@ namespace HantuBelajar
             endTrend.text = trend + "   " + Mathf.RoundToInt(e.dFrom * 100) + "%  →  " + Mathf.RoundToInt(e.dTo * 100) + "%   ·   " + e.label;
             endNext.text = e.next ?? "";
             endPrimaryText.text = won ? "RUMAH BERIKUTNYA" : "COBA RUMAH BARU";
+            // uji coba pemain: info kesulitan disembunyikan (peserta tidak tahu sesi mana yang memakai DDA)
+            bool study = Playtest.Active;
+            endDda.SetActive(!study); endMenuBtn.SetActive(!study);
+            endPrimaryRt.anchoredPosition = new Vector2(study ? 0f : -190f, -334f);
+            if (study) endPrimaryText.text = "LANJUTKAN";
         }
 
         public void ShowIntro(string title, string[] chips, float seconds)

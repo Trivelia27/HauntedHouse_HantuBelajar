@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="400" viewBox="0 0 760 400" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="Tingkat lolos per profil bot">
+<rect x="0.5" y="0.5" width="759" height="399" rx="10" fill="#fcfcfb" stroke="#e2e1dc"/>
+<text x="24" y="32" font-size="16" font-weight="600" fill="#0b0b0b">Tingkat lolos per profil bot</text>
+<text x="24" y="52" font-size="12" fill="#52514e">DDA vs kesulitan tetap (d = 0,40); garis putus = target performa 62%</text>
+<text x="703" y="68" font-size="12" fill="#52514e">Tetap</text>
+<rect x="687" y="59" width="10" height="10" rx="2" fill="#eb6834"/>
+<text x="649.2" y="68" font-size="12" fill="#52514e">DDA</text>
+<rect x="633.2" y="59" width="10" height="10" rx="2" fill="#2a78d6"/>
+<line x1="64" x2="736" y1="344" y2="344" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="348" font-size="12" text-anchor="end" fill="#52514e">0%</text>
+<line x1="64" x2="736" y1="291.2" y2="291.2" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="295.2" font-size="12" text-anchor="end" fill="#52514e">20%</text>
+<line x1="64" x2="736" y1="238.4" y2="238.4" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="242.4" font-size="12" text-anchor="end" fill="#52514e">40%</text>
+<line x1="64" x2="736" y1="185.6" y2="185.6" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="189.6" font-size="12" text-anchor="end" fill="#52514e">60%</text>
+<line x1="64" x2="736" y1="132.8" y2="132.8" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="136.8" font-size="12" text-anchor="end" fill="#52514e">80%</text>
+<line x1="64" x2="736" y1="80" y2="80" stroke="#e6e5e1" stroke-width="1"/>
+<text x="56" y="84" font-size="12" text-anchor="end" fill="#52514e">100%</text>
+<path d="M151,344 V183 Q151,179 155,179 H171 Q175,179 175,183 V344 Z" fill="#2a78d6"><title>DDA - Pro: 63%</title></path>
+<path d="M163,224.53 V140.55 M159,224.53 h8 M159,140.55 h8" stroke="#52514e" stroke-width="1.5" fill="none"/>
+<path d="M177,344 V290.25 Q177,286.25 181,286.25 H197 Q201,286.25 201,290.25 V344 Z" fill="#eb6834"><title>Tetap - Pro: 22%</title></path>
+<path d="M189,314.9 V241.69 M185,314.9 h8 M185,241.69 h8" stroke="#52514e" stroke-width="1.5" fill="none"/>
+<text x="176" y="366" font-size="13" text-anchor="middle" fill="#0b0b0b">Pro</text>
+<path d="M375,344 V240.75 Q375,236.75 379,236.75 H395 Q399,236.75 399,240.75 V344 Z" fill="#2a78d6"><title>DDA - Sedang: 41%</title></path>
+<path d="M387,276.63 V191.57 M383,276.63 h8 M383,191.57 h8" stroke="#52514e" stroke-width="1.5" fill="none"/>
+<path d="M401,344 V273.75 Q401,269.75 405,269.75 H421 Q425,269.75 425,273.75 V344 Z" fill="#eb6834"><title>Tetap - Sedang: 28%</title></path>
+<path d="M413,302.91 V224.21 M409,302.91 h8 M409,224.21 h8" stroke="#52514e" stroke-width="1.5" fill="none"/>
+<text x="400" y="366" font-size="13" text-anchor="middle" fill="#0b0b0b">Sedang</text>
+<path d="M599,344 V315 Q599,311 603,311 H619 Q623,311 623,315 V344 Z" fill="#2a78d6"><title>DDA - Lemah: 13%</title></path>
+<path d="M611,330.88 V269.9 M607,330.88 h8 M607,269.9 h8" stroke="#52514e" stroke-width="1.5" fill="none"/>
+<path d="M625,344 V339.75 Q625,335.75 629,335.75 H645 Q649,335.75 649,339.75 V344 Z" fill="#eb6834"><title>Tetap - Lemah: 3%</title></path>
+<path d="M637,342.54 V302.44 M633,342.54 h8 M633,302.44 h8" stroke="#52514e" stroke-width="1.5" fill="none"/>
+<text x="624" y="366" font-size="13" text-anchor="middle" fill="#0b0b0b">Lemah</text>
+<line x1="64" x2="736" y1="344" y2="344" stroke="#52514e" stroke-width="1"/>
+<line x1="64" x2="736" y1="180.32" y2="180.32" stroke="#8a8984" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="732" y="174.32" font-size="12" text-anchor="end" fill="#52514e">target 62%</text>
+<text x="24" y="386" font-size="11" fill="#52514e">Garis galat = selang kepercayaan 95%. Nilai lengkap di tabel laporan.</text>
+</svg>

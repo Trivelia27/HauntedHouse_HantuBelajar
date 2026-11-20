@@ -48,6 +48,7 @@ namespace HantuBelajar
                 case "flow": yield return Flow(); break;
                 case "hide": yield return HideTest(); break;
                 case "stairs": yield return StairsTest(int.Parse(env("HB_HOUSES", "30")), int.Parse(env("HB_RENDER", "3"))); break;
+                case "hud": yield return HudTest(); break;
             }
             Finish();
         }
@@ -735,6 +736,158 @@ namespace HantuBelajar
                 log.AppendLine(sb.ToString());
                 DestroyImmediate(g);
             }
+        }
+
+        // ------------------------------------------------------------------ uji: informasi HUD rapi (tidak berulang, tidak saling menimpa / menutupi)
+        IEnumerator HudTest()
+        {
+            HUD hud = gm.ui.hud; PlayerController p = gm.player; GhostAI g = gm.ghost; HouseLayout L = gm.layout;
+            Directory.CreateDirectory("TestOutput/shots/hud");
+            g.frozen = true;
+            p.Spawn(G.W(L.start) + Vector3.up * 0.05f, 0f); yield return Frames(3);
+
+            // (1) judul rumah tampil -> notifikasi & petunjuk ditahan, lalu muncul setelah judul memudar
+            HUD.ResetHints();
+            hud.BeginHouse(false, false);
+            gm.ui.ShowIntro("RUMAH #1", new[] { "2 LANTAI", "3 RELIK", "RUANG DIGEMBOK" }, 4f);
+            hud.Toast("Kamu merasa ada yang terbangun di rumah ini...", null, "ghost", UIKit.Danger);
+            hud.Hint("uji_awal", "Petunjuk uji: muncul setelah judul rumah hilang.");
+            yield return Real(1.5f);
+            Check("(1) selama judul rumah tampil notifikasi & petunjuk ditahan", !hud.ToastShown && hud.HintNow == "");
+            Capture("hud/h1_judul", p.cam, true);
+            bool sawToast = false, sawHint = false, shot1 = false; float tEnd = Time.realtimeSinceStartup + 6f;
+            while (Time.realtimeSinceStartup < tEnd && !(sawToast && sawHint && shot1))
+            {
+                if (hud.ToastShown) sawToast = true;
+                if (hud.HintNow != "") sawHint = true;
+                if (!shot1 && hud.ToastShown && hud.HintNow != "") { shot1 = true; Capture("hud/h1_setelah_judul", p.cam, true); }
+                yield return null;
+            }
+            Check("(1) setelah judul hilang notifikasi & petunjuk muncul", sawToast && sawHint);
+            log.AppendLine("     kanvas uji (batch) " + hud.root.rect.size + " - cek tumpang-tindih memakai layar virtual 16:9 (1920x1080) dan 16:10 (1821x1138)");
+            hud.BeginHouse(false, false); yield return Real(0.3f);
+
+            // (2) hantu mendengar langkah berkali-kali (node berbeda) -> satu indikator stabil, tanpa notifikasi berulang;
+            //     relik + "semua relik" berurutan -> pesan relik tidak terpotong
+            HidingSpot spot = gm.house.spots.Find(s => s.kind == SpotKind.Lemari) ?? gm.house.spots[0];
+            Vector3Int gn = L.ghostStart;
+            List<Vector3Int> nbs = new List<Vector3Int>(); L.Neighbors(gn, true, true, nbs);
+            g.Teleport(G.W(gn)); g.WakeForTest(); g.frozen = false;
+            float minA = 1f, relicShown = -1f, relicGone = -1f, t0 = Time.realtimeSinceStartup; int hears = 0; bool toastHear = false;
+            gm.Toast("Relik 3 / 3  ·  Jam Kakek", "Jam saku yang berhenti tepat pukul 03.07.", "relic");
+            gm.Toast("Semua relik terkumpul!", "Pintu keluar terbuka - ikuti kompas ke lantai 1", "exit", UIKit.Good);
+            bool shot2 = false;
+            while (Time.realtimeSinceStartup - t0 < 4.2f)
+            {
+                float t = Time.realtimeSinceStartup - t0;
+                if (hears < 7 && t > hears * 0.5f) { Vector3Int n = hears % 2 == 0 || nbs.Count == 0 ? gn : nbs[hears % nbs.Count]; g.HearNoise(G.W(n), 30f); hears++; }
+                if (t > 0.5f) minA = Mathf.Min(minA, hud.AlertAlpha);
+                if (hud.ToastQueuedContains("mendengar")) toastHear = true;
+                if (relicShown < 0f && hud.ToastNow.StartsWith("Relik 3")) relicShown = t;
+                if (relicShown >= 0f && relicGone < 0f && !hud.ToastNow.StartsWith("Relik 3")) relicGone = t;
+                if (!shot2 && t > 1.2f) { shot2 = true; g.frozen = true; Capture("hud/h2_dengar_relik", p.cam, true); g.frozen = false; }
+                yield return null;
+            }
+            g.frozen = true;
+            Check("(2) " + hears + "x mendengar -> indikator tetap tampil tanpa berkedip (alpha min " + minA.ToString("0.00", CI) + ")", minA > 0.95f);
+            Check("(2) tidak ada notifikasi 'mendengar' yang berulang", !toastHear);
+            Check("(2) pesan relik tidak terpotong pesan berikutnya (tampil " + (relicGone - relicShown).ToString("0.0", CI) + " dtk)", relicShown >= 0f && relicGone - relicShown >= 2.5f);
+            Check("(2) 'Semua relik terkumpul!' tampil sesudahnya", hud.ToastNow == "Semua relik terkumpul!");
+
+            // (3) dikejar -> indikator merah; (4) lolos -> 'kehilangan jejak'
+            g.Teleport(G.W(gn)); g.ForceChase(); yield return Real(0.45f); g.frozen = true;
+            Check("(3) saat dikejar indikator 'HANTU MELIHATMU'", hud.AlertNow == "HANTU MELIHATMU");
+            Capture("hud/h3_kejar", p.cam, true);
+            HidingSpot nearGhost = spot; float nd = float.MaxValue;
+            foreach (HidingSpot hs in gm.house.spots) { float dd = (hs.transform.position - G.W(gn)).sqrMagnitude; if (dd < nd) { nd = dd; nearGhost = hs; } }
+            g.frozen = false; g.InspectForTest(nearGhost); yield return Real(0.5f); g.frozen = true;
+            Check("(4) setelah lolos indikator 'HANTU KEHILANGAN JEJAKMU'", hud.AlertNow == "HANTU KEHILANGAN JEJAKMU");
+            Capture("hud/h4_lolos", p.cam, true);
+            g.frozen = false; yield return Real(3.4f); g.frozen = true;
+            Check("(4) indikator hilang sendiri setelah beberapa detik", hud.AlertAlpha < 0.05f);
+
+            // (5) bersembunyi: petunjuk + status sembunyi bertumpuk rapi
+            p.Spawn(spot.exitPos + Vector3.up * 0.05f, 0f); yield return Frames(3);
+            p.EnterHide(spot); yield return Real(1.2f);
+            Check("(5) petunjuk sembunyi muncul", hud.HintNow == "hide");
+            List<string> ov5 = Overlaps(hud);
+            Check("(5) status sembunyi tidak menimpa petunjuk" + (ov5.Count > 0 ? " (" + string.Join(", ", ov5) + ")" : ""), ov5.Count == 0);
+            Capture("hud/h5_sembunyi", p.cam, true);
+            p.ExitHide(); yield return Real(0.8f);
+
+            // (6) mode presentasi + petunjuk + notifikasi + indikator: tidak ada panel yang saling menutupi
+            p.Spawn(G.W(L.start) + Vector3.up * 0.05f, 0f); yield return Frames(3);
+            hud.present = true; hud.showDebug = true;
+            gm.Toast("Kunci tua didapat", "Cari pintu yang digembok - ikon gembok ada di peta (M)", "key");
+            hud.Hint("uji_presentasi", "HANTU! Lari (Shift) atau sembunyi di lemari / kolong ranjang (E). Di persembunyian ia tidak bisa melihatmu.", "ghost");
+            GhostMemory.Feed("Mencatat: lemari (Dapur)  ·  dipakai 1×  ·  E[θ] = 0,53");
+            yield return Real(1.0f);
+            List<string> ov6 = Overlaps(hud);
+            Check("(6) mode presentasi: panel tidak saling menutupi" + (ov6.Count > 0 ? " (" + string.Join(", ", ov6) + ")" : ""), ov6.Count == 0);
+            Check("(6) keadaan hantu tampil di indikator", hud.AlertNow.StartsWith("HANTU: "));
+            Capture("hud/h6_presentasi", p.cam, true);
+            hud.present = false; hud.showDebug = false; yield return Real(0.6f);
+
+            // (7) peta penuh dibuka: notifikasi ditahan, indikator pindah ke bawah
+            hud.BeginHouse(false, false);
+            hud.map.SetFull(true); yield return Real(0.3f);
+            gm.Toast("Baterai senter +45%", null, "battery", UIKit.Good);
+            g.Teleport(G.W(gn)); g.WakeForTest(); g.frozen = false; g.HearNoise(G.W(gn), 30f); yield return Real(0.6f); g.frozen = true;
+            Check("(7) notifikasi ditahan selama peta penuh terbuka", !hud.ToastShown);
+            Check("(7) indikator hantu tetap terlihat di bawah peta", hud.AlertNow == "HANTU MENDENGAR SESUATU" && hud.AlertRect.anchorMin.y < 0.5f);
+            Capture("hud/h7_peta", p.cam, true);
+            hud.map.SetFull(false); yield return Real(0.6f);
+            Check("(7) setelah peta ditutup notifikasi muncul", hud.ToastNow == "Baterai senter +45%" && hud.ToastShown);
+            yield return Real(3.5f);
+
+            // (8) umpan balik tombol menu terlihat di atas layar pengaturan
+            gm.ui.ShowSettings(gm.ui.ShowGame); gm.ui.SelectTab(3);
+            hud.Toast("Pengaturan dikembalikan ke bawaan", null, "check", UIKit.Good, true);
+            yield return Real(0.6f);
+            Check("(8) notifikasi menu terlihat di layar pengaturan", hud.ToastShown);
+            Capture("hud/h8_menu", p.cam, true);
+            gm.ui.ShowGame(); yield return Real(3.2f);
+            g.frozen = true; g.Teleport(G.W(L.ghostStart));
+        }
+
+        /// <summary>Pasangan elemen informasi HUD yang tampil dan saling bertumpuk, pada layar 16:9 dan 16:10.</summary>
+        List<string> Overlaps(HUD hud)
+        {
+            List<string> res = new List<string>();
+            foreach (Vector2 cv in new[] { new Vector2(1920f, 1080f), new Vector2(1821f, 1138f) })
+                foreach (string s in OverlapsAt(hud, cv)) if (!res.Contains(s)) res.Add(s + " @" + cv.x.ToString("0", CI));
+            return res;
+        }
+
+        /// <summary>Persegi elemen (berjangkar satu titik pada kanvas / root HUD yang membentang penuh) pada ukuran kanvas virtual.</summary>
+        static Rect RefRect(RectTransform r, Vector2 cv)
+        {
+            Vector2 size = r.sizeDelta;
+            if (r.name == "Debug") size.y = Mathf.Min(size.y, HUD.DebugMaxH(cv.y));
+            if (r.name == "Toast") size.x = Mathf.Min(size.x, Mathf.Max(300f, HUD.ToastMaxW(cv.x, r.parent.Find("HUD/Debug") != null && r.parent.Find("HUD/Debug").gameObject.activeInHierarchy)));
+            Vector2 piv = new Vector2(r.anchorMin.x * cv.x, r.anchorMin.y * cv.y) + r.anchoredPosition;
+            return new Rect(piv.x - r.pivot.x * size.x, piv.y - r.pivot.y * size.y, size.x, size.y);
+        }
+
+        List<string> OverlapsAt(HUD hud, Vector2 cv)
+        {
+            List<RectTransform> els = new List<RectTransform>();
+            foreach (string n in new[] { "Objective", "Flash", "Minimap", "Compass", "Prompt", "Tutorial" })
+            {
+                Transform t = hud.root.Find(n);
+                if (t != null && t.gameObject.activeInHierarchy) els.Add((RectTransform)t);
+            }
+            foreach (RectTransform r in new[] { hud.ToastRect, hud.AlertRect, hud.HintRect, hud.HiddenRect, hud.DebugRect, hud.FeedRect })
+                if (r != null && r.gameObject.activeInHierarchy) els.Add(r);
+            List<string> res = new List<string>();
+            for (int i = 0; i < els.Count; i++)
+                for (int j = i + 1; j < els.Count; j++)
+                {
+                    CanvasGroup ca = els[i].GetComponent<CanvasGroup>(), cb = els[j].GetComponent<CanvasGroup>();
+                    if ((ca != null && ca.alpha < 0.05f) || (cb != null && cb.alpha < 0.05f)) continue;
+                    if (RefRect(els[i], cv).Overlaps(RefRect(els[j], cv))) res.Add(els[i].name + "+" + els[j].name);
+                }
+            return res;
         }
 
         // ------------------------------------------------------------------ uji kejar

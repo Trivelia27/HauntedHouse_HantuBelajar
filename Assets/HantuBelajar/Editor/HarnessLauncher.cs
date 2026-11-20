@@ -16,6 +16,7 @@ namespace HantuBelajar.EditorTools
         [MenuItem("Tools/Hantu Belajar/Uji/Alur pemain (menu-main-menang)")] public static void RunFlow() { Run("flow"); }
         [MenuItem("Tools/Hantu Belajar/Uji/Apakah hantu tahu pemain bersembunyi")] public static void RunHide() { Run("hide"); }
         [MenuItem("Tools/Hantu Belajar/Uji/Kerapian tangga")] public static void RunStairs() { Run("stairs"); }
+        [MenuItem("Tools/Hantu Belajar/Uji/Informasi HUD (notifikasi, indikator hantu, petunjuk)")] public static void RunHud() { Run("hud"); }
 
         static void Run(string kind)
         {

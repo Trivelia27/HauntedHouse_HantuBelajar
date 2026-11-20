@@ -147,7 +147,7 @@ namespace HantuBelajar
             local.TryGetValue(s.id, out Vector2 v); v.x += 1f; local[s.id] = v;
             pendingKind[(int)s.kind] += 1f; pendingRoom[(int)s.roomType] += 1f; totalHides++;
             Persist();
-            Feed("Hantu mencatat persembunyianmu di " + s.KindName + " (" + HouseGenerator.RoomName(s.roomType) + ") - dipakai " + Uses(s) + "x, E[theta] = " + Mean(s).ToString("0.00"));
+            Feed("Mencatat: " + s.KindName + " (" + HouseGenerator.RoomName(s.roomType) + ")  ·  dipakai " + Uses(s) + "×  ·  E[θ] = " + Mean(s).ToString("0.00"));
         }
 
         public static void RecordCheck(HidingSpot s, bool found)

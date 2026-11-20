@@ -151,7 +151,7 @@ namespace HantuBelajar
             if (taken) return;
             taken = true;
             p.battery = Mathf.Min(100f, p.battery + 45f);
-            GameManager.I.Toast("Baterai senter +45%");
+            GameManager.I.Toast("Baterai senter +45%", null, "battery", UIKit.Good);
             AudioDirector.I.Pickup();
             gameObject.SetActive(false);
         }
@@ -247,7 +247,7 @@ namespace HantuBelajar
         public override void Use(PlayerController p)
         {
             if (!locked) return;
-            if (!p.hasKey) { AudioDirector.I.Rattle(); GameManager.I.Toast("Pintu terkunci. Kuncinya ada di suatu tempat di rumah ini."); return; }
+            if (!p.hasKey) { AudioDirector.I.Rattle(); GameManager.I.Toast("Pintu terkunci", "Kuncinya ada di suatu tempat di rumah ini - lihat peta (M)", "lock", UIKit.Danger); return; }
             Unlock();
             p.hasKey = false;
             GameManager.I.OnUnlock();

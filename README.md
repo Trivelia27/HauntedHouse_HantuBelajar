@@ -25,7 +25,7 @@ Build Windows: **Tools > Hantu Belajar > Build Windows (.exe)** -> `Builds/Windo
 | E | ambil relik, kunci, baterai; buka gembok; sembunyi / keluar |
 | M | denah lengkap rumah (kedua lantai + jalur ke tujuan) |
 | Esc | jeda (Lanjutkan, Panduan, Pengaturan, Menu Utama + denah rumah) |
-| F1 | mode presentasi: panel PCG-DDA-AI, status hantu, hantu & heatmap jalur di peta |
+| F1 | mode presentasi: panel PCG-DDA-AI, state hantu di indikator, memori hantu, hantu & heatmap jalur di peta |
 | Tab | panel presentasi |
 | G | rumah baru (PCG) |
 | F2 / F3 | kesulitan DDA turun / naik |
@@ -37,6 +37,12 @@ Build Windows: **Tools > Hantu Belajar > Build Windows (.exe)** -> `Builds/Windo
 - **Panduan awal** (checklist) di rumah pertama: bergerak, senter, peta, ambil relik, bersembunyi. Hantu tetap tidur sampai langkah dasar selesai.
 - **Kompas** di atas layar menunjuk tujuan berikutnya (relik terdekat -> kunci -> gembok -> pintu keluar) mengikuti jalur **A\*** rumah (lewat pintu & tangga), lengkap dengan jarak dan tanda naik/turun tangga; baterai ditandai saat senter hampir habis.
 - **Peta mini** berputar mengikuti arah pandang + **denah penuh (M)** kedua lantai: relik, kunci, pintu digembok, pintu keluar, baterai, tempat sembunyi, tangga, jalur ke tujuan, ruangan yang sudah dikunjungi.
+- **Informasi di layar ditata dalam jalur tetap** supaya tidak saling menimpa:
+  - *indikator kewaspadaan hantu* di bawah kompas - satu elemen stabil: **HANTU MENDENGAR SESUATU** (menyelidiki suara), **HANTU MELIHATMU** (mengejar), **HANTU KEHILANGAN JEJAKMU** (setelah lolos). Tidak muncul berulang tiap langkah; saat peta penuh dibuka pindah ke bawah layar;
+  - *notifikasi peristiwa* (relik, kunci, baterai, pintu) berikon, antre tanpa duplikat sehingga pesan relik tidak terpotong pesan lain;
+  - *petunjuk* sekali-tampil di bawah tengah, antre (petunjuk bahaya didahulukan), status TERSEMBUNYI menumpuk rapi di atasnya;
+  - notifikasi & petunjuk ditahan selama judul "RUMAH #N" atau peta penuh tampil; umpan balik tombol pengaturan terlihat di atas menu.
+- **Mode presentasi (F1)**: panel PCG/DDA/AI di kolom kiri (di bawah kartu tujuan, tinggi mengikuti isi), memori hantu di kanan (di bawah peta mini), state FSM hantu di indikator - tidak ada panel yang menutupi petunjuk, kartu senter, atau notifikasi.
 - Ikon, kartu, tombol, keycap dibuat prosedural (`Icons`, `UIKit`); font Bahnschrift / Segoe UI dari Windows dengan cadangan bawaan Unity.
 
 ## Sistem
@@ -72,6 +78,7 @@ Alur integrasi: Performa Pemain -> DDA -> parameter Game AI + parameter PCG -> p
 - **Screenshot visual** -> `TestOutput/shots/` (semua layar menu, HUD, peta, panduan)
 - **Alur pemain** -> klik tombol UI sungguhan: menu -> panduan -> panduan awal -> peta -> jeda/pengaturan -> kunci & gembok -> menang -> rumah berikutnya -> menu -> lanjutkan
 - **Apakah hantu tahu pemain bersembunyi** -> 9 cek (tidak terlihat, tidak ditemukan saat diperiksa, berjaga lalu pergi, heatmap tidak mencatat)
+- **Informasi HUD** -> 17 cek: indikator hantu stabil walau hantu mendengar berkali-kali, tidak ada notifikasi berulang, pesan relik tidak terpotong, notifikasi ditahan saat judul rumah / peta penuh, tidak ada panel yang saling menutupi pada layar 16:9 & 16:10 (termasuk mode presentasi); screenshot di `TestOutput/shots/hud/`
 - **Kerapian tangga** -> 30 rumah: tidak ada benda di ruang lubang tangga, kamera pemain tidak menembus apa pun saat naik, pemain bisa naik/turun di 3 lajur; render sudut pandang pemain + potongan samping + denah di `TestOutput/shots/stairs/`
 - **Bot bermain (smoke)** -> `TestOutput/report_smoke.txt` (error, macet, posisi di luar batas)
 - **Eksperimen DDA** -> `Hasil_Eksperimen_DDA.md`

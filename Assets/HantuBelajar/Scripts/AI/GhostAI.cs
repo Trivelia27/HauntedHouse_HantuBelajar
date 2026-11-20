@@ -106,7 +106,7 @@ namespace HantuBelajar
                     asleep = false; unseenTime = 0f;
                     state = GhostState.Muncul; fadingOut = false; fadeT = 0f; waking = true;
                     decision = "Terbangun";
-                    GameManager.I.Toast("Kamu merasa ada yang terbangun di rumah ini...");
+                    GameManager.I.Toast("Kamu merasa ada yang terbangun di rumah ini...", null, "ghost", UIKit.Danger);
                 }
                 return;
             }
@@ -292,7 +292,7 @@ namespace HantuBelajar
                 SetPathTo(heard);
                 linger = 2.0f;
                 SetState(GhostState.Selidiki, "Mendengar langkah kaki (" + dist.ToString("0") + " m, radius " + r.ToString("0.0") + " m)");
-                GameManager.I.Toast("Hantu mendengar sesuatu...");
+                // pemberitahuan "hantu mendengar sesuatu" ditampilkan HUD sebagai indikator kewaspadaan (tidak berulang tiap langkah)
             }
         }
 
@@ -520,6 +520,7 @@ namespace HantuBelajar
 
         public void Teleport(Vector3 p) { transform.position = p; lastFramePos = p; path.Clear(); pathIdx = 0; }
         public void ForceChase() { frozen = false; asleep = false; graceUntil = 0f; vis.SetAlpha(1f); StartChase(); }
+        public void WakeForTest() { asleep = false; graceUntil = 0f; waking = false; fadingOut = false; vis.SetAlpha(1f); SetState(GhostState.Patroli, "Uji: bangun"); }
         public void GuardForTest(HidingSpot s) { BeginGuard(s, "Uji: berjaga dekat tempat sembunyi"); }
         public void InspectForTest(HidingSpot s) { queue.Clear(); inspecting = null; queue.Add(s); SetState(GhostState.Cari, "Uji: memeriksa tempat sembunyi tertentu"); }
         public bool Asleep { get { return asleep; } }

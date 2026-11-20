@@ -252,19 +252,19 @@ namespace HantuBelajar
             relicsFound++;
             dda.OnRelic();
             AudioDirector.I.Pickup();
-            Toast("Relik " + relicsFound + " / " + RelicsNeeded + "  ·  " + RelicPickup.Names[r.index % RelicPickup.Names.Length], RelicPickup.Lore[r.index % RelicPickup.Lore.Length]);
+            Toast("Relik " + relicsFound + " / " + RelicsNeeded + "  ·  " + RelicPickup.Names[r.index % RelicPickup.Names.Length], RelicPickup.Lore[r.index % RelicPickup.Lore.Length], "relic");
             if (relicsFound >= RelicsNeeded)
             {
                 if (house.exit != null) house.exit.SetUnlocked(true);
-                Toast("Semua relik terkumpul!", "Pintu keluar terbuka - ikuti kompas ke lantai 1");
+                Toast("Semua relik terkumpul!", "Pintu keluar terbuka - ikuti kompas ke lantai 1", "exit", UIKit.Good);
             }
         }
-        public void OnKey() { dda.OnProgress(); Toast("Kunci tua didapat", "Cari pintu yang digembok - ikon gembok ada di peta (M)"); }
+        public void OnKey() { dda.OnProgress(); Toast("Kunci tua didapat", "Cari pintu yang digembok - ikon gembok ada di peta (M)", "key"); }
         public void OnUnlock()
         {
             layout.lockedKeys.Clear();     // graf jalur pemain kini melewati pintu yang sudah terbuka
             dda.OnProgress();
-            Toast("Gembok terbuka");
+            Toast("Gembok terbuka", null, "lock", UIKit.Good);
         }
 
         public void OnWin()
@@ -316,7 +316,8 @@ namespace HantuBelajar
             };
         }
 
-        public void Toast(string s, string sub = null) { if (ui != null) ui.hud.Toast(s, sub); }
+        /// <summary>Notifikasi peristiwa di HUD (antre, tanpa menimpa pesan lain). icon = nama ikon Icons, tint = warna ikon.</summary>
+        public void Toast(string s, string sub = null, string icon = "info", Color? tint = null) { if (ui != null) ui.hud.Toast(s, sub, icon, tint); }
 
         /// <summary>Uji build (-autoshots): render kamera + UI ke PNG di samping exe.</summary>
         void AutoShot()

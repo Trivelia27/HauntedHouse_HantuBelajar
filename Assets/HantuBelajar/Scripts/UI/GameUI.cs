@@ -34,6 +34,8 @@ namespace HantuBelajar
         Text introTitle; RectTransform introChips; CanvasGroup introCg; float introT, introAge;
 
         public bool GuideOpen { get { return guideMenu != null && guideMenu.activeSelf; } }
+        /// <summary>Judul "RUMAH #N" masih tampil (notifikasi & petunjuk ditahan sampai judul memudar).</summary>
+        public bool IntroActive { get { return introCard != null && introCard.activeSelf && introT > 0.7f; } }
         public bool AnyMenu { get { return mainMenu.activeSelf || pauseMenu.activeSelf || settingsMenu.activeSelf || guideMenu.activeSelf || endMenu.activeSelf; } }
 
         public static GameUI Create()
@@ -57,6 +59,7 @@ namespace HantuBelajar
             hud = gameObject.AddComponent<HUD>();
             hud.Build(transform);
             BuildMain(); BuildPause(); BuildSettings(); BuildGuide(); BuildEnd(); BuildIntro();
+            hud.BuildOverlay(transform);       // notifikasi di atas menu (umpan balik tombol pengaturan)
             fade = UIKit.Fill(transform, "Fade", Color.black);
             fade.raycastTarget = false;
             HideAll();
@@ -173,8 +176,8 @@ namespace HantuBelajar
             UIKit.MakeToggle(p3, "Peta kecil (kanan atas)", Settings.Minimap, new Vector2(0f, y), W, v => Settings.Minimap = v); y += step;
             UIKit.MakeToggle(p3, "Kompas & penanda arah tujuan", Settings.Compass, new Vector2(0f, y), W, v => Settings.Compass = v); y += step;
             UIKit.MakeToggle(p3, "Petunjuk kontekstual", Settings.Hints, new Vector2(0f, y), W, v => Settings.Hints = v); y += step;
-            UIKit.MakeButton(p3, "ResetTut", "ULANGI PANDUAN AWAL", new Vector2(0.5f, 1f), new Vector2(-268f, y - 20f), new Vector2(510f, 58f), () => { HUD.ResetHints(); hud.Toast("Panduan bermain & panduan awal akan muncul lagi"); }, 21, BtnStyle.Secondary, "info", new Vector2(0.5f, 1f));
-            UIKit.MakeButton(p3, "ResetMem", "HAPUS MEMORI HANTU", new Vector2(0.5f, 1f), new Vector2(268f, y - 20f), new Vector2(510f, 58f), () => { GhostMemory.Reset(); hud.Toast("Memori hantu dihapus", "Hantu mulai dari nol lagi"); }, 21, BtnStyle.Secondary, "ghost", new Vector2(0.5f, 1f));
+            UIKit.MakeButton(p3, "ResetTut", "ULANGI PANDUAN AWAL", new Vector2(0.5f, 1f), new Vector2(-268f, y - 20f), new Vector2(510f, 58f), () => { HUD.ResetHints(); hud.Toast("Panduan bermain & panduan awal akan muncul lagi", null, "check", UIKit.Good, true); }, 21, BtnStyle.Secondary, "info", new Vector2(0.5f, 1f));
+            UIKit.MakeButton(p3, "ResetMem", "HAPUS MEMORI HANTU", new Vector2(0.5f, 1f), new Vector2(268f, y - 20f), new Vector2(510f, 58f), () => { GhostMemory.Reset(); hud.Toast("Memori hantu dihapus", "Hantu mulai dari nol lagi", "ghost", UIKit.Cold, true); }, 21, BtnStyle.Secondary, "ghost", new Vector2(0.5f, 1f));
             UIKit.Label(p3, "Note", "Hantu menyimpan kebiasaanmu (jenis & ruang tempat sembunyi favorit) di antara rumah dan sesi permainan.", 19, TextAnchor.UpperLeft, new Vector2(0.5f, 1f), new Vector2(-520f, y - 100f), new Vector2(1040f, 60f), UIKit.Faint, FontKind.Body, new Vector2(0f, 1f));
             // bawah
             UIKit.MakeButton(card, "Defaults", "BAWAAN", new Vector2(0f, 0f), new Vector2(50f, 40f), new Vector2(220f, 58f), ResetDefaults, 22, BtnStyle.Secondary, null, new Vector2(0f, 0f));
@@ -213,7 +216,7 @@ namespace HantuBelajar
             settingsMenu.transform.SetSiblingIndex(idx);
             back = ret;
             settingsMenu.SetActive(true);
-            hud.Toast("Pengaturan dikembalikan ke bawaan");
+            hud.Toast("Pengaturan dikembalikan ke bawaan", null, "check", UIKit.Good, true);
         }
 
         // ------------------------------------------------------------------ panduan bermain

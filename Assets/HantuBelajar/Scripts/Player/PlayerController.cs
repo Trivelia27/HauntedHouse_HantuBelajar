@@ -14,6 +14,10 @@ namespace HantuBelajar
         public bool focusBeam;
         const float FlashIntensity = 34f;
         float focusT, aimDist = 10f; Renderer lensR; Material lensOn, lensOff;
+        // tangan pemegang senter: 1 = senter diangkat di depan, 0 = tangan turun (keluar layar) saat senter tidak dipakai
+        float raise = 1f, lowerDelay;
+        public float HandRaise { get { return raise; } }
+        public bool HandVisible { get { return viewmodel != null && viewmodel.gameObject.activeSelf; } }
         public float hideTime, noiseLevel;
         public string focusPrompt = "";
         public Interactable focus;
@@ -115,6 +119,7 @@ namespace HantuBelajar
             vel = Vector3.zero; vy = 0f;
             pivot.localPosition = new Vector3(0f, 1.62f, 0f); pivot.localRotation = Quaternion.identity; cam.transform.localRotation = Quaternion.identity;
             flashRig.position = cam.transform.position; flashRig.rotation = cam.transform.rotation;
+            raise = 1f; lowerDelay = 0.3f;
             viewmodel.gameObject.SetActive(true);
         }
 
@@ -140,13 +145,19 @@ namespace HantuBelajar
             if (gm.ghost != null && !gm.ghost.frozen && !gm.ghost.Asleep && gm.ghost.DistanceTo(transform.position) < 7f && Random.value < dt * 3f) flicker = 0.12f;
             flicker -= dt;
             if (flicker > 0f) k *= 0.15f;
+            // tangan: senter diangkat hanya saat dipakai; mati / baterai habis / bersembunyi -> jeda sebentar lalu tangan turun keluar layar
+            bool wantRaise = flashOn && battery > 0f && !hidden;
+            if (wantRaise) lowerDelay = 0.25f; else lowerDelay -= dt;
+            raise = Mathf.MoveTowards(raise, wantRaise ? 1f : lowerDelay > 0f ? raise : 0f, dt * (wantRaise ? 3.0f : 2.0f));
+            k *= Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.6f, 1f, raise));                // sinar menyala saat senter terangkat ke arah bidikan
             focusT = Mathf.MoveTowards(focusT, focusBeam ? 1f : 0f, dt * 5f);
             flash.intensity = Mathf.Lerp(FlashIntensity, FlashIntensity * 1.7f, focusT) * k;
             flash.spotAngle = Mathf.Lerp(60f, 34f, focusT); flash.innerSpotAngle = Mathf.Lerp(40f, 22f, focusT);
             flash.range = Mathf.Lerp(28f, 40f, focusT);
             spill.intensity = Mathf.Lerp(3.2f, 1.2f, focusT) * k;
             if (lensR != null) lensR.sharedMaterial = lightOn ? lensOn : lensOff;
-            viewmodel.gameObject.SetActive(!hidden && gm.state != GameManager.State.Menu);
+            bool showHand = !hidden && gm.state != GameManager.State.Menu && raise > 0.01f;
+            if (viewmodel.gameObject.activeSelf != showHand) viewmodel.gameObject.SetActive(showHand);
 
             if (transitioning) { UpdateAudio(dt, false); return; }
 
@@ -284,8 +295,16 @@ namespace HantuBelajar
             aimDist = Mathf.Lerp(aimDist, aim, 1f - Mathf.Exp(-dt * 10f));
             Vector3 aimPt = c.position + flashRig.forward * aimDist;
             flash.transform.rotation = Quaternion.LookRotation(aimPt - flash.transform.position, flashRig.up);
-            viewmodel.localPosition = new Vector3(0.23f + swayX * 0.004f, -0.25f + swayY * 0.004f + Mathf.Sin(bob) * 0.006f, 0.38f);
-            viewmodel.localRotation = Quaternion.Inverse(c.rotation) * flashRig.rotation * Quaternion.Euler(4f + swayY * 0.4f, -9f + swayX * 0.4f, -6f);
+            // dua fase: senter menunduk dulu (masih terlihat), lalu tangan turun keluar layar; naik = kebalikannya
+            float r = raise * raise * (3f - 2f * raise), low = 1f - r;
+            float tiltT = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(low / 0.55f));
+            float dropT = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((low - 0.2f) / 0.8f));
+            Vector3 held = new Vector3(0.23f + swayX * 0.004f, -0.25f + swayY * 0.004f + Mathf.Sin(bob) * 0.006f, 0.38f) + new Vector3(0f, 0.012f, 0.03f) * focusT;
+            // tangan turun di sisi badan: tepat di bawah tepi layar (tetap tak terlihat hingga FOV 95)
+            Vector3 down = new Vector3(0.25f, -0.44f, 0.30f) + new Vector3(0f, Mathf.Sin(bob) * 0.008f, 0f);
+            viewmodel.localPosition = Vector3.Lerp(held, down, dropT) + new Vector3(0.015f, -0.015f, 0f) * Mathf.Sin(dropT * Mathf.PI); // sedikit melengkung
+            Quaternion heldRot = Quaternion.Inverse(c.rotation) * flashRig.rotation * Quaternion.Euler(4f + swayY * 0.4f, -9f + swayX * 0.4f, -6f);
+            viewmodel.localRotation = Quaternion.Slerp(heldRot, Quaternion.Euler(50f, -12f, -12f), tiltT);              // senter menunjuk ke lantai
         }
 
         void UpdateAudio(float dt, bool walking)

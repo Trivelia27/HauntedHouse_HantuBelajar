@@ -68,6 +68,7 @@ Pengaturan URP dari paket Stealth Game dibuat dengan URP yang lebih baru; pengat
 
 ### Senter (`Scripts/Player`)
 Lampu sorot dengan bayangan lembut, pola cahaya (cookie) prosedural bertitik terang di tengah, cahaya sebaran lebar, dan sinar yang diarahkan ke titik bidik (sedikit tertinggal saat menoleh). Tahan klik kanan untuk mode fokus. Baterai tahan +-4,5 - 10 menit tergantung kesulitan, baru meredup di bawah 20% dan tersendat di bawah 8%.
+Tangan hanya memegang senter di depan saat senter dipakai: dimatikan (F), baterai habis, atau bersembunyi -> senter menunduk lalu tangan turun keluar layar; dinyalakan -> tangan terangkat dan sinar menyala seiring senter diarahkan ke depan.
 
 ### Dynamic Difficulty Adjustment (`Scripts/DDA`)
 - `DDAManager`: indikator tiap 8 detik (tempo relik dibanding jadwal, waktu dikejar, baterai, waktu sembunyi, nyaris tertangkap) -> skor **P** -> dihaluskan (EMA) -> `d += (P - 0,62) x 0,1`, dibatasi +0,15 / -0,3 per rumah. Event: tertangkap -0,15, relik +0,03, lolos +0,08. Evaluasi berhenti saat jeda atau hantu dibekukan.

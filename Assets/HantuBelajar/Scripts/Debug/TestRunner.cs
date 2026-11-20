@@ -840,6 +840,32 @@ namespace HantuBelajar
             Check("(7) setelah peta ditutup notifikasi muncul", hud.ToastNow == "Baterai senter +45%" && hud.ToastShown);
             yield return Real(3.5f);
 
+            // (9) senter mati -> tangan turun keluar layar; senter menyala -> tangan naik & sinar menyala
+            p.Spawn(G.W(L.start) + Vector3.up * 0.05f, 0f); yield return Frames(3);
+            // lampu bantu kecil di kamera hanya untuk screenshot: model tangan & senter gelap sulit terlihat di ruangan gelap
+            GameObject handLight = new GameObject("TestHandLight"); handLight.transform.SetParent(p.cam.transform, false); handLight.transform.localPosition = new Vector3(0.05f, 0.12f, 0.08f);
+            Light hl = handLight.AddComponent<Light>(); hl.type = LightType.Point; hl.range = 1.1f; hl.intensity = 2.2f; hl.color = new Color(1f, 0.92f, 0.82f); hl.shadows = LightShadows.None;
+            yield return Frames(2);
+            Check("(9) awal: senter menyala & tangan terangkat", p.flashOn && p.HandVisible && p.HandRaise > 0.99f);
+            Capture("hud/h9_a_terangkat", p.cam, true);
+            p.ToggleFlash(); yield return Frames(2);
+            Check("(9) klik mati: sinar langsung padam, tangan belum turun (jeda)", !p.flash.enabled && p.HandVisible);
+            float tw9 = Time.realtimeSinceStartup + 2f;
+            while (p.HandRaise > 0.8f && Time.realtimeSinceStartup < tw9) yield return null;
+            Capture("hud/h9_b_turun", p.cam, true);
+            yield return Real(1.0f);
+            Check("(9) senter mati: tangan turun keluar layar (raise " + p.HandRaise.ToString("0.00", CI) + ")", !p.HandVisible && p.HandRaise < 0.02f);
+            Capture("hud/h9_c_mati", p.cam, true);
+            p.ToggleFlash();
+            tw9 = Time.realtimeSinceStartup + 2f;
+            while (p.HandRaise < 0.75f && Time.realtimeSinceStartup < tw9) yield return null;
+            Check("(9) klik nyala: tangan naik kembali (raise " + p.HandRaise.ToString("0.00", CI) + ")", p.HandVisible && p.HandRaise >= 0.75f);
+            Capture("hud/h9_d_naik", p.cam, true);
+            yield return Real(0.6f);
+            Check("(9) senter menyala: tangan terangkat & sinar penuh", p.HandVisible && p.HandRaise > 0.99f && p.flash.enabled && p.flash.intensity > 20f);
+            Capture("hud/h9_e_nyala", p.cam, true);
+            Destroy(handLight);
+
             // (8) umpan balik tombol menu terlihat di atas layar pengaturan
             gm.ui.ShowSettings(gm.ui.ShowGame); gm.ui.SelectTab(3);
             hud.Toast("Pengaturan dikembalikan ke bawaan", null, "check", UIKit.Good, true);

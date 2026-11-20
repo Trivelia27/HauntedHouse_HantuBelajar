@@ -16,6 +16,8 @@ Pemain terjebak di rumah berhantu yang berubah setiap malam. Kumpulkan semua rel
 Tanpa paket Asset Store game tetap jalan dengan model dan suara pengganti sederhana.
 Build Windows: **Tools > Hantu Belajar > Build Windows (.exe)** -> `Builds/Windows/HauntedHouse.exe`.
 
+Pengaturan URP dari paket Stealth Game dibuat dengan URP yang lebih baru; pengaturan yang tidak dikenal Unity 6000.0 dibersihkan otomatis saat proyek dibuka (atau lewat **Tools > Hantu Belajar > Bersihkan Peringatan Proyek**), sehingga peringatan *Missing types referenced ... UniversalRenderPipelineGlobalSettings* tidak muncul lagi. Saat editor kosong (belum Play), tab Game memang menampilkan *No cameras rendering* karena seluruh rumah, kamera, dan menu dibuat saat Play.
+
 ## Kontrol
 | Tombol | Fungsi |
 |---|---|

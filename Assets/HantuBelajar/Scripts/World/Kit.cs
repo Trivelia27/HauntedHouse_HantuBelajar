@@ -165,6 +165,58 @@ namespace HantuBelajar
             return g;
         }
 
+        /// <summary>
+        /// Prisma dari poligon cembung (titik = (z, y) lokal, searah jarum jam bila z ke kanan & y ke atas) setebal 'thick' sepanjang x lokal.
+        /// UV dalam meter (serat papan mengikuti v), diputar uvAngle derajat; tanpa collider.
+        /// </summary>
+        public static GameObject Prism(Transform parent, string name, Vector3 worldPos, Quaternion rot, Vector2[] poly, float thick, Material m, float uvAngle = 0f)
+        {
+            List<Vector3> v = new List<Vector3>(); List<Vector3> n = new List<Vector3>(); List<Vector2> uv = new List<Vector2>(); List<int> tri = new List<int>();
+            float ca = Mathf.Cos(uvAngle * Mathf.Deg2Rad), sa = Mathf.Sin(uvAngle * Mathf.Deg2Rad), h = thick * 0.5f;
+            for (int sgn = -1; sgn <= 1; sgn += 2)
+            {
+                int b0 = v.Count;
+                foreach (Vector2 p in poly)
+                {
+                    v.Add(new Vector3(sgn * h, p.y, p.x)); n.Add(new Vector3(sgn, 0f, 0f));
+                    uv.Add(new Vector2(p.x * ca + p.y * sa, -p.x * sa + p.y * ca));
+                }
+                for (int i = 1; i + 1 < poly.Length; i++)
+                {
+                    if (sgn > 0) { tri.Add(b0); tri.Add(b0 + i); tri.Add(b0 + i + 1); }
+                    else { tri.Add(b0); tri.Add(b0 + i + 1); tri.Add(b0 + i); }
+                }
+            }
+            float acc = 0f;
+            for (int i = 0; i < poly.Length; i++)
+            {
+                Vector2 p0 = poly[i], p1 = poly[(i + 1) % poly.Length];
+                Vector2 ed = p1 - p0; float len = ed.magnitude;
+                if (len < 1e-4f) continue;
+                Vector3 nn = new Vector3(0f, ed.x, -ed.y) / len;     // normal keluar untuk poligon searah jarum jam
+                int b0 = v.Count;
+                v.Add(new Vector3(-h, p0.y, p0.x)); v.Add(new Vector3(h, p0.y, p0.x)); v.Add(new Vector3(h, p1.y, p1.x)); v.Add(new Vector3(-h, p1.y, p1.x));
+                for (int k = 0; k < 4; k++) n.Add(nn);
+                uv.Add(new Vector2(0f, acc)); uv.Add(new Vector2(thick, acc)); uv.Add(new Vector2(thick, acc + len)); uv.Add(new Vector2(0f, acc + len));
+                acc += len;
+                tri.Add(b0); tri.Add(b0 + 2); tri.Add(b0 + 1);
+                tri.Add(b0); tri.Add(b0 + 3); tri.Add(b0 + 2);
+            }
+            Mesh mesh = new Mesh { name = name };
+            mesh.SetVertices(v); mesh.SetNormals(n); mesh.SetUVs(0, uv); mesh.SetTriangles(tri, 0);
+            mesh.RecalculateBounds(); mesh.RecalculateTangents();
+            GameObject g = new GameObject(name);
+            g.transform.SetParent(parent, false);
+            g.transform.position = worldPos;
+            g.transform.rotation = rot;
+            g.AddComponent<MeshFilter>().sharedMesh = mesh;
+            MeshRenderer r = g.AddComponent<MeshRenderer>();
+            r.sharedMaterial = m;
+            r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+            r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            return g;
+        }
+
         /// <summary>Primitif dalam ruang lokal parent, tanpa collider.</summary>
         public static GameObject Prim(PrimitiveType t, Transform parent, Vector3 localPos, Vector3 size, Material m, string name = "Part", Quaternion? localRot = null)
         {

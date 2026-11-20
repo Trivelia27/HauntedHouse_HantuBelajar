@@ -50,7 +50,7 @@ Build Windows: **Tools > Hantu Belajar > Build Windows (.exe)** -> `Builds/Windo
 6. Tempat sembunyi (lemari / kolong ranjang), **relik dengan batas jarak ke tempat sembunyi terdekat** (`relicSpotDist`), baterai, dan perabot: generate-and-test (penempatan dibatalkan bila memutus konektivitas).
 7. Validasi (semua sel terhubung, kunci & pintu keluar terjangkau tanpa kunci, tiap lantai punya relik); gagal -> ulang dengan seed turunan, lalu parameter dilonggarkan.
 
-`HouseBuilder` + `Furnish` mengubah data menjadi rumah 3D dari modul paket Haunted House (dinding dua sisi per tipe ruangan, jendela + cahaya bulan, kusen pintu, tangga berpagar, perabot per tipe ruangan, lampu dinding, perapian menyala, lilin). Hasil uji: `Hasil_Eksperimen_PCG.md`.
+`HouseBuilder` + `Furnish` mengubah data menjadi rumah 3D dari modul paket Haunted House (dinding dua sisi per tipe ruangan, jendela + cahaya bulan, kusen pintu, tangga berpapan samping utuh dengan list anak tangga + balok tepi lubang yang menopang dinding & pagar lantai atas, perabot per tipe ruangan, lampu dinding, perapian menyala, lilin). Karpet, balok plafon, sarang laba-laba, jendela, lukisan, dan lampu dinding tidak pernah ditempatkan di/menutupi lubang tangga. Hasil uji: `Hasil_Eksperimen_PCG.md`.
 
 ### Game AI (`Scripts/AI`)
 - `GhostAI`: **Finite State Machine** Patroli / Hadang / Selidiki / Kejar / Cari / Periksa / Jaga / Muncul, gerak **A\*** pada graf node (termasuk tangga), indra penglihatan (kerucut pandang + raycast; senter menyala = lebih terlihat, ruang gelap & jongkok = sulit terlihat) dan pendengaran (langkah kaki; beda lantai lebih redup).
@@ -71,7 +71,8 @@ Alur integrasi: Performa Pemain -> DDA -> parameter Game AI + parameter PCG -> p
 ## Pengujian otomatis (Tools > Hantu Belajar > Uji)
 - **Screenshot visual** -> `TestOutput/shots/` (semua layar menu, HUD, peta, panduan)
 - **Alur pemain** -> klik tombol UI sungguhan: menu -> panduan -> panduan awal -> peta -> jeda/pengaturan -> kunci & gembok -> menang -> rumah berikutnya -> menu -> lanjutkan
-- **Apakah hantu tahu pemain bersembunyi** -> 10 cek (tidak terlihat, tidak ditemukan saat diperiksa, berjaga lalu pergi, heatmap tidak mencatat)
+- **Apakah hantu tahu pemain bersembunyi** -> 9 cek (tidak terlihat, tidak ditemukan saat diperiksa, berjaga lalu pergi, heatmap tidak mencatat)
+- **Kerapian tangga** -> 30 rumah: tidak ada benda di ruang lubang tangga, kamera pemain tidak menembus apa pun saat naik, pemain bisa naik/turun di 3 lajur; render sudut pandang pemain + potongan samping + denah di `TestOutput/shots/stairs/`
 - **Bot bermain (smoke)** -> `TestOutput/report_smoke.txt` (error, macet, posisi di luar batas)
 - **Eksperimen DDA** -> `Hasil_Eksperimen_DDA.md`
 - **Eksperimen PCG** -> `Hasil_Eksperimen_PCG.md`

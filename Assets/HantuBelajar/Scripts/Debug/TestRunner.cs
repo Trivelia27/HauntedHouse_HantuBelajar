@@ -47,6 +47,7 @@ namespace HantuBelajar
                 case "chase": yield return Chase(); break;
                 case "flow": yield return Flow(); break;
                 case "hide": yield return HideTest(); break;
+                case "stairs": yield return StairsTest(int.Parse(env("HB_HOUSES", "30")), int.Parse(env("HB_RENDER", "3"))); break;
             }
             Finish();
         }
@@ -495,6 +496,245 @@ namespace HantuBelajar
             Time.timeScale = 4f; yield return Real(4.5f); Time.timeScale = 1f;
             Check("(g) setelah waktu jaga habis hantu pergi, pemain tetap aman (state " + g.state + ")", g.state != GhostState.Jaga && gm.state == GameManager.State.Playing && p.hidden);
             p.ForceUnhide();
+        }
+
+        // ------------------------------------------------------------------ uji tangga: tidak ada benda yang menutupi tangga / ditembus kamera
+        IEnumerator StairsTest(int houses, int renderHouses)
+        {
+            Directory.CreateDirectory("TestOutput/shots/stairs");
+            WallProfile();
+            int[] fixedSeeds = { 42019, 1234, 5678, 9012, 31337 };
+            int stairsChecked = 0, intrusions = 0, camHits = 0, walked = 0, walkHouses = 10;
+            List<string> walkFails = new List<string>();
+            Dictionary<string, int> what = new Dictionary<string, int>();
+            for (int i = 0; i < houses; i++)
+            {
+                string only = System.Environment.GetEnvironmentVariable("HB_SEEDS");
+                int[] list = string.IsNullOrEmpty(only) ? null : System.Array.ConvertAll(only.Split(','), int.Parse);
+                if (list != null && i >= list.Length) break;
+                int seed = list != null ? list[i] : i < fixedSeeds.Length ? fixedSeeds[i] : 20000 + i * 7919;
+                gm.NewHouse(seed); gm.ghost.frozen = true;
+                yield return Frames(3);
+                HouseLayout L = gm.layout;
+                foreach (Stair s in L.stairs)
+                {
+                    stairsChecked++;
+                    bool[] walls = StairWalls(L, s);
+                    List<string> hits = StairIntrusions(L, s);
+                    List<string> cam = StairCameraPath(L, s);
+                    intrusions += hits.Count; camHits += cam.Count;
+                    foreach (string h in hits) { string k = h.Split(' ')[0]; what[k] = (what.TryGetValue(k, out int c) ? c : 0) + 1; }
+                    log.AppendLine("seed " + seed + " tangga " + s.bottom + " arah " + s.dir + " | dinding L1 kiri/kanan " + walls[0] + "/" + walls[1] + ", L2 kiri/kanan/belakang " + walls[2] + "/" + walls[3] + "/" + walls[4] +
+                                   " | benda di lubang tangga: " + (hits.Count == 0 ? "-" : string.Join(", ", hits)) + " | kamera menembus: " + (cam.Count == 0 ? "-" : string.Join(", ", cam)));
+                    if (i < renderHouses) yield return StairViews(L, s, "stairs/s" + i);
+                    if (i < walkHouses) { walked++; yield return WalkStairs(s, walkFails); }
+                }
+            }
+            log.AppendLine();
+            foreach (var kv in what) log.AppendLine("  jenis benda pengganggu: " + kv.Key + " x" + kv.Value);
+            foreach (string w in walkFails) log.AppendLine("  " + w);
+            Check("tidak ada benda di ruang lubang tangga (" + stairsChecked + " tangga, " + houses + " rumah)", intrusions == 0);
+            Check("kamera pemain tidak menembus benda saat naik tangga", camHits == 0);
+            Check("pemain bisa naik & turun tangga di lajur tengah, kiri, kanan (" + walked + " tangga)", walkFails.Count == 0);
+        }
+
+        /// <summary>Pemain (autopilot) berjalan bawah -> pendaratan -> bawah di tiga lajur; gagal bila tidak sampai dalam 12 dtk.</summary>
+        IEnumerator WalkStairs(Stair s, List<string> fails)
+        {
+            PlayerController p = gm.player;
+            Vector3 d = G.D3(s.dir), side = new Vector3(d.z, 0f, -d.x);
+            float yaw = Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg;
+            Time.timeScale = 2f;
+            foreach (float lane in new[] { 0f, -0.9f, 0.9f })
+            {
+                Vector3 off = side * lane;
+                p.Spawn(G.W(s.BottomNode) + off + Vector3.up * 0.05f, yaw);
+                yield return Frames(2);
+                float tUp = -1f, tDown = -1f;
+                yield return WalkRoute(p, new[] { s.RampStart + off, s.RampEnd + off, G.W(s.LandingNode) + off }, 12f, t => tUp = t);
+                if (tUp < 0f || p.transform.position.y < s.RampEnd.y - 0.25f) fails.Add("tangga " + s.bottom + ": naik lajur " + lane + " gagal, berhenti di " + p.transform.position);
+                else
+                {
+                    yield return WalkRoute(p, new[] { s.RampEnd + off, s.RampStart + off, G.W(s.BottomNode) + off }, 12f, t => tDown = t);
+                    if (tDown < 0f || p.transform.position.y > s.RampStart.y + 0.3f) fails.Add("tangga " + s.bottom + ": turun lajur " + lane + " gagal, berhenti di " + p.transform.position);
+                }
+                log.AppendLine("     jalan lajur " + lane.ToString("+0.0;-0.0;0.0", CI) + ": naik " + (tUp < 0f ? "GAGAL" : tUp.ToString("0.0", CI) + " dtk") + ", turun " + (tDown < 0f ? "GAGAL" : tDown.ToString("0.0", CI) + " dtk"));
+            }
+            p.autopilot = false; p.autoDir = Vector3.zero;
+            Time.timeScale = 1f;
+        }
+
+        IEnumerator WalkRoute(PlayerController p, Vector3[] pts, float timeout, System.Action<float> done)
+        {
+            p.autopilot = true; p.autoRun = false; p.autoLook = null;
+            float t = 0f; int i = 0;
+            while (t < timeout)
+            {
+                Vector3 dd = pts[i] - p.transform.position;
+                if (G.Flat(dd).magnitude < 0.35f && Mathf.Abs(dd.y) < 1.4f)
+                {
+                    i++;
+                    if (i >= pts.Length) { p.autoDir = Vector3.zero; done(t); yield break; }
+                    continue;
+                }
+                p.autoDir = G.Flat(dd).normalized;
+                t += Time.deltaTime;
+                yield return null;
+            }
+            p.autoDir = Vector3.zero;
+        }
+
+        /// <summary>[0]=dinding L1 kiri, [1]=L1 kanan, [2]=L2 kiri, [3]=L2 kanan, [4]=L2 belakang (kiri = arah -side).</summary>
+        static bool[] StairWalls(HouseLayout L, Stair s)
+        {
+            int left = (s.dir + 3) & 3, right = (s.dir + 1) & 3, back = G.Opp(s.dir);
+            return new[] { L.Wall(s.f, s.Ramp1, left), L.Wall(s.f, s.Ramp1, right), L.Wall(s.f + 1, s.Ramp1, left), L.Wall(s.f + 1, s.Ramp1, right), L.Wall(s.f + 1, s.Ramp1, back) };
+        }
+
+        static string TopName(Transform t, Transform root)
+        {
+            while (t.parent != null && t.parent != root) t = t.parent;
+            return t.name;
+        }
+
+        static bool Structural(string n)
+        {
+            return n == "Stairs" || n == "Floor" || n == "Ceiling" || n.StartsWith("Wall") || n == "Post" || n == "Header" || n == "HeaderTrim";
+        }
+
+        /// <summary>Benda (selain struktur) yang berada di ruang udara di atas anak tangga sampai setinggi orang + kepala.</summary>
+        List<string> StairIntrusions(HouseLayout L, Stair s)
+        {
+            List<string> res = new List<string>();
+            Vector3 o = s.RampStart, d = G.D3(s.dir), side = new Vector3(d.z, 0f, -d.x);
+            float cap = (s.f + 1) * G.StoryH + 2.4f;
+            Transform root = gm.house.transform;
+            foreach (Renderer r in gm.house.GetComponentsInChildren<Renderer>())
+            {
+                if (!r.enabled || r is ParticleSystemRenderer) continue;
+                string top = TopName(r.transform, root);
+                // bagian tangga sendiri (pegangan, tiang, balok tepi, pagar) tidak boleh masuk lajur jalan (+-1,30 m)
+                bool stairPart = top == "Stairs";
+                if (stairPart) { if (r.name == "Step" || r.name == "Nosing") continue; }
+                else if (Structural(top)) continue;
+                float latMax = stairPart ? 1.30f : 1.45f;
+                Bounds b = r.bounds;
+                float a0 = float.MaxValue, a1 = float.MinValue, l0 = float.MaxValue, l1 = float.MinValue;
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 p = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1)) - o;
+                    float a = Vector3.Dot(p, d), l = Vector3.Dot(p, side);
+                    a0 = Mathf.Min(a0, a); a1 = Mathf.Max(a1, a); l0 = Mathf.Min(l0, l); l1 = Mathf.Max(l1, l);
+                }
+                float A0 = Mathf.Max(a0, 0.32f), A1 = Mathf.Min(a1, G.T - 0.05f);
+                if (A0 > A1 || l1 < -latMax || l0 > latMax) continue;
+                float y0 = b.min.y - o.y, y1 = b.max.y - o.y;
+                float s0 = A0 / G.T * G.StoryH, s1 = A1 / G.T * G.StoryH;
+                if (s0 > y1 - 0.03f || s1 < y0 - 2.4f || y0 + o.y > cap) continue;
+                res.Add(top + "(" + r.name + " y" + b.min.y.ToString("0.00", CI) + "-" + b.max.y.ToString("0.00", CI) + " sel " + G.C(r.transform.position) + " a" + ((a0 + a1) * 0.5f).ToString("0.00", CI) + " l" + ((l0 + l1) * 0.5f).ToString("0.00", CI) + ")");
+            }
+            return res;
+        }
+
+        /// <summary>Titik kamera pemain di sepanjang tangga (3 lajur) yang berada di dalam batas renderer mana pun.</summary>
+        List<string> StairCameraPath(HouseLayout L, Stair s)
+        {
+            HashSet<string> res = new HashSet<string>();
+            Vector3 o = s.RampStart, d = G.D3(s.dir), side = new Vector3(d.z, 0f, -d.x);
+            Transform root = gm.house.transform;
+            Renderer[] rs = gm.house.GetComponentsInChildren<Renderer>();
+            for (int li = -1; li <= 1; li++)
+                for (int k = 0; k <= 25; k++)
+                {
+                    float a = k / 25f * G.T;
+                    Vector3 eye = o + d * a + side * (li * 1.0f) + Vector3.up * (a / G.T * G.StoryH + 1.62f);
+                    foreach (Renderer r in rs)
+                    {
+                        if (!r.enabled || r is ParticleSystemRenderer) continue;
+                        Bounds b = r.bounds; b.Expand(0.12f);
+                        if (b.Contains(eye)) res.Add(TopName(r.transform, root) + "/" + r.name + "@" + (a / G.T).ToString("0.00", CI));
+                    }
+                }
+            return new List<string>(res);
+        }
+
+        IEnumerator StairViews(HouseLayout L, Stair s, string prefix)
+        {
+            Vector3 o = s.RampStart, d = G.D3(s.dir), side = new Vector3(d.z, 0f, -d.x);
+            float Surf(float a) { return a / G.T * G.StoryH; }
+            View(prefix + "_a_bawah", G.W(s.BottomNode) - d * 1.2f + Vector3.up * 1.62f, s.RampEnd + Vector3.up * 1.0f);
+            View(prefix + "_a_bawah_dekat", G.W(s.BottomNode) + Vector3.up * 1.62f, s.RampEnd + Vector3.up * 1.4f);
+            foreach (float t in new[] { 0.15f, 0.45f, 0.75f })
+            {
+                Vector3 eye = o + d * (t * G.T) + Vector3.up * (Surf(t * G.T) + 1.62f);
+                View(prefix + "_b_naik" + Mathf.RoundToInt(t * 100), eye, eye + d * 2f + Vector3.up * 0.8f);
+            }
+            Vector3 mid = o + d * (0.6f * G.T) + Vector3.up * (Surf(0.6f * G.T) + 1.62f);
+            View(prefix + "_c_turun", mid, mid - d * 3f + Vector3.down * 1.7f);
+            View(prefix + "_d_atas", G.W(s.LandingNode) + Vector3.up * 1.62f, o + d * 1.2f + Vector3.up * 0.3f);
+            View(prefix + "_d_atas_tepi", G.W(s.LandingNode) - d * 1.0f + side * 0.6f + Vector3.up * 1.62f, o + d * 0.6f + Vector3.up * 0.0f);
+            // potongan samping (ortografis, bidang potong = garis tengah tangga) + denah lantai atas
+            Camera c = ShotCam();
+            Light flash = c.GetComponentInChildren<Light>(); if (flash) flash.enabled = false;
+            bool fog = RenderSettings.fog; RenderSettings.fog = false;
+            GameObject sun = new GameObject("TestSun"); Light sl = sun.AddComponent<Light>(); sl.type = LightType.Directional; sl.intensity = 1.1f;
+            Vector3 center = o + d * (G.T * 0.5f) + Vector3.up * 2.7f;
+            c.orthographic = true; c.orthographicSize = 3.9f; c.nearClipPlane = 20f; c.farClipPlane = 60f;
+            for (int sd = -1; sd <= 1; sd += 2)
+            {
+                c.transform.position = center + side * (20f * sd) - d * 0.0f;
+                c.transform.rotation = Quaternion.LookRotation(-side * sd);
+                sun.transform.rotation = Quaternion.LookRotation((-side * sd + Vector3.down * 0.6f + d * 0.3f).normalized);
+                Capture(prefix + "_e_potong" + (sd < 0 ? "_kiri" : "_kanan"), c, false);
+            }
+            // denah: sembunyikan plafon & semua yang di atas lantai atas + 2,3 m
+            List<Renderer> hidden = new List<Renderer>();
+            float lim = (s.f + 1) * G.StoryH + 2.3f;
+            foreach (Renderer r in gm.house.GetComponentsInChildren<Renderer>())
+                if (r.enabled && (r.gameObject.layer == 8 || r.bounds.min.y > lim)) { r.enabled = false; hidden.Add(r); }
+            c.orthographicSize = 5.2f; c.nearClipPlane = 0.3f;
+            c.transform.position = G.W(s.f + 1, s.Ramp1) + Vector3.up * 30f; c.transform.rotation = Quaternion.LookRotation(Vector3.down, d);
+            sun.transform.rotation = Quaternion.Euler(65f, 30f, 0f);
+            Capture(prefix + "_f_denah", c, false);
+            foreach (Renderer r in hidden) r.enabled = true;
+            Destroy(sun);
+            c.orthographic = false; c.nearClipPlane = 0.05f; c.farClipPlane = 150f;
+            RenderSettings.fog = fog;
+            if (flash) flash.enabled = true;
+            yield return null;
+        }
+
+        /// <summary>Profil kedalaman modul dinding paket (z lokal per ketinggian) - untuk menyelaraskan list tangga dengan muka dinding.</summary>
+        void WallProfile()
+        {
+            // mesh paket tidak bisa dibaca -> ukur dengan raycast ke MeshCollider sementara (hanya di editor)
+            foreach (string key in new[] { "wall", "window" })
+            {
+                GameObject[] set = AssetLibrary.Models(key);
+                if (set.Length == 0) continue;
+                GameObject pf = set[0];
+                GameObject g = Instantiate(pf, new Vector3(0f, -300f, 0f), Quaternion.identity);
+                foreach (Collider c0 in g.GetComponentsInChildren<Collider>(true)) DestroyImmediate(c0);
+                foreach (MeshFilter mf in g.GetComponentsInChildren<MeshFilter>(true)) { MeshCollider mc = mf.gameObject.AddComponent<MeshCollider>(); mc.sharedMesh = mf.sharedMesh; }
+                Physics.SyncTransforms();
+                Bounds rb = Kit.RawBounds(pf);
+                StringBuilder sb = new StringBuilder("profil " + pf.name + " (z lokal tak berskala; muka depan = +z, x " + rb.min.x.ToString("0.00", CI) + ".." + rb.max.x.ToString("0.00", CI) + "): ");
+                for (float y = 0.025f; y < rb.max.y; y += 0.05f)
+                {
+                    float front = float.MinValue, back = float.MaxValue;
+                    foreach (float fx in new[] { 0.2f, 0.5f, 0.8f })
+                    {
+                        float x = Mathf.Lerp(rb.min.x, rb.max.x, fx);
+                        Vector3 o = new Vector3(x, -300f + y, 2f);
+                        if (Physics.Raycast(o, Vector3.back, out RaycastHit h, 4f)) front = Mathf.Max(front, h.point.z);
+                        o.z = -2f;
+                        if (Physics.Raycast(o, Vector3.forward, out RaycastHit h2, 4f)) back = Mathf.Min(back, h2.point.z);
+                    }
+                    sb.Append(" [" + y.ToString("0.00", CI) + "] " + (back < float.MaxValue ? back.ToString("0.000", CI) : "-") + ".." + (front > float.MinValue ? front.ToString("0.000", CI) : "-"));
+                }
+                log.AppendLine(sb.ToString());
+                DestroyImmediate(g);
+            }
         }
 
         // ------------------------------------------------------------------ uji kejar

@@ -47,6 +47,8 @@ namespace HantuBelajar
             HashSet<long> covered = new HashSet<long>();
             foreach (Placed p in L.props) covered.Add(FaceKey(L, p.f, p.cell, G.Opp(p.dir)));
             foreach (Placed p in L.spots) covered.Add(FaceKey(L, p.f, p.cell, G.Opp(p.dir)));
+            // dinding di samping/ujung anak tangga (lantai bawah) tertutup tangga -> tanpa jendela, lukisan, lampu dinding
+            foreach (Stair s in L.stairs) for (int k = 0; k < 4; k++) covered.Add(FaceKey(L, s.f, s.Ramp1, k));
 
             BuildFloorsCeilings(L, root);
             int shadowBudget = 6;
@@ -284,98 +286,158 @@ namespace HantuBelajar
         }
 
         // ------------------------------------------------------------------ tangga
+        // Tata letak melintang (jarak dari garis tengah sel; setengah sel 1,80 m), hasil ukur modul dinding paket:
+        //   muka datar dinding 1,64 (list atas/cornice 1,52)  |  balok tepi lubang 1,50..1,80 setinggi 2,70..3,00
+        //   sisi terbuka : anak tangga s/d 1,44, papan samping 1,44..1,50, pegangan & jeruji di 1,47
+        //   sisi dinding : anak tangga s/d 1,62, papan dinding 1,59..1,64
+        public const float WellBand = 0.30f;      // kedalaman balok tepi lubang tangga dari garis sel
+        const float WellBandBottom = 2.70f;       // tinggi bawah balok tepi, relatif lantai bawah
+        const float WallFace = 0.16f;             // muka datar modul dinding dari garis sel (0,03 + 0,108 x 1,2)
+        const float OpenEdge = 1.44f, WallEdge = 1.62f;
+
         static void BuildStairs(HouseLayout L, Transform root, Stair s)
         {
             GameObject sg = new GameObject("Stairs");
             sg.transform.SetParent(root, false);
+            Transform st = sg.transform;
             Vector3 d = G.D3(s.dir);
-            Vector3 side = new Vector3(d.z, 0f, -d.x);
-            Vector3 start = s.RampStart;
-            float run = G.T, rise = G.StoryH, width = G.T - 0.5f;
+            Vector3 side = new Vector3(d.z, 0f, -d.x);                  // +side = kanan (arah dir+1)
+            Vector3 start = s.RampStart;                                // tepi sel bawah/ramp, di lantai bawah
+            float run = G.T, rise = G.StoryH, half = G.T * 0.5f;
             const int N = 15;
-            float tread = run / N, step = rise / N;
+            float tread = run / N, step = rise / N, pitch = rise / run;
             Quaternion rot = Quaternion.LookRotation(d);
-            Material treadM = Look.DarkWood, riserM = Look.Wood;
+            Material wood = Look.Wood, dark = Look.DarkWood;
+            int fu = s.f + 1, left = (s.dir + 3) & 3, right = (s.dir + 1) & 3, back = G.Opp(s.dir);
+            bool[] wallF = { L.Wall(s.f, s.Ramp1, left), L.Wall(s.f, s.Ramp1, right) };    // dinding di samping anak tangga (lantai bawah)
+            bool[] wallU = { L.Wall(fu, s.Ramp1, left), L.Wall(fu, s.Ramp1, right) };      // dinding di samping lubang (lantai atas)
+            bool wallBack = L.Wall(fu, s.Ramp1, back);
+            float[] e = { wallF[0] ? WallEdge : OpenEdge, wallF[1] ? WallEdge : OpenEdge };  // jangkauan anak tangga kiri / kanan
+            float width = e[0] + e[1];
+            Vector3 cs = start + side * ((e[1] - e[0]) * 0.5f);                              // garis tengah anak tangga
+
+            // anak tangga (balok padat dari lantai) + list depan (nosing) yang menonjol di atas tiap tegakan
             for (int i = 0; i < N; i++)
             {
-                float hgt = step * (i + 1);
-                Vector3 c = start + d * (tread * (i + 0.5f)) + Vector3.up * (hgt * 0.5f);
-                Kit.Box(sg.transform, "Step", c, new Vector3(width, hgt, tread + 0.01f), i % 2 == 0 ? treadM : riserM, false, rot);
-                Kit.Box(sg.transform, "Nosing", start + d * (tread * (i + 1) - 0.02f) + Vector3.up * (hgt + 0.015f), new Vector3(width + 0.04f, 0.03f, tread + 0.06f), treadM, false, rot);
+                float hgt = step * (i + 1), a = tread * i;
+                Kit.Box(st, "Step", cs + d * (a + tread * 0.5f) + Vector3.up * (hgt * 0.5f), new Vector3(width, hgt, tread + 0.002f), wood, false, rot);
+                Kit.Box(st, "Nosing", cs + d * (a + 0.03f) + Vector3.up * (hgt - 0.015f), new Vector3(width, 0.038f, 0.12f), dark, false, rot);
             }
-            // permukaan ramp (collider halus untuk CharacterController)
-            Vector3 a = start, b = s.RampEnd;
-            Vector3 dir = (b - a).normalized;
+
+            // papan samping utuh sejajar tangga (satu mesh per sisi -> tanpa celah/garis antar anak tangga)
+            float topOff = step + 0.06f;                                // tepi atas papan = garis nosing + 6 cm
+            Vector2[] prof = { new Vector2(0f, 0f), new Vector2(0f, topOff), new Vector2((rise - topOff) / pitch, rise), new Vector2(run, rise), new Vector2(run, 0f) };
+            for (int k = 0; k < 2; k++)
+            {
+                float sd = k == 0 ? -1f : 1f, t = wallF[k] ? 0.05f : 0.06f;
+                float lat = wallF[k] ? half - WallFace - t * 0.5f : e[k] + t * 0.5f;
+                Kit.Prism(st, "StairString", start + side * (lat * sd), rot, prof, t, dark, 90f);
+            }
+
+            // sisi terbuka: tiang awal + pegangan miring + jeruji; pegangan berakhir di bawah balok tepi lubang
+            const float railH = 0.92f;
+            for (int k = 0; k < 2; k++)
+            {
+                if (wallF[k]) continue;
+                float sd = k == 0 ? -1f : 1f;
+                Vector3 o = start + side * ((e[k] + 0.03f) * sd);
+                float a0 = 0.07f, a1 = (WellBandBottom - railH - 0.035f) / pitch;
+                Kit.Box(st, "Newel", o + d * a0 + Vector3.up * 0.6f, new Vector3(0.12f, 1.2f, 0.12f), dark, false);
+                Kit.Box(st, "NewelCap", o + d * a0 + Vector3.up * 1.225f, new Vector3(0.16f, 0.05f, 0.16f), dark, false);
+                Vector3 r0 = o + d * a0 + Vector3.up * (pitch * a0 + railH), r1 = o + d * a1 + Vector3.up * (pitch * a1 + railH);
+                Kit.Box(st, "Handrail", (r0 + r1) * 0.5f, new Vector3(0.075f, 0.065f, (r1 - r0).magnitude), dark, false, Quaternion.LookRotation(r1 - r0));
+                for (int i = 0; i < N * 2; i++)
+                {
+                    float a = tread * (i + 0.5f) * 0.5f;
+                    if (a < a0 + 0.1f) continue;
+                    float yb = pitch * a + topOff, yt = Mathf.Min(pitch * a + railH - 0.03f, WellBandBottom);
+                    if (yt - yb < 0.05f) break;
+                    Kit.Box(st, "Baluster", o + d * a + Vector3.up * ((yb + yt) * 0.5f), new Vector3(0.04f, yt - yb, 0.04f), dark, false);
+                }
+            }
+
+            // balok tepi lubang lantai atas (belakang + kiri + kanan): menutup tepi pelat & menopang dinding lantai atas
+            float bandH = rise - WellBandBottom;
+            Vector3 bandBack = start + d * (WellBand * 0.5f) + Vector3.up * (WellBandBottom + bandH * 0.5f);
+            Kit.Box(st, "WellTrim", bandBack, new Vector3(G.T, bandH, WellBand), dark, true, rot);
+            for (int k = 0; k < 2; k++)
+            {
+                float sd = k == 0 ? -1f : 1f;
+                Vector3 c = start + side * ((half - WellBand * 0.5f) * sd) + d * ((WellBand + run) * 0.5f) + Vector3.up * (WellBandBottom + bandH * 0.5f);
+                Kit.Box(st, "WellTrim", c, new Vector3(WellBand, bandH, run - WellBand), dark, true, rot);
+            }
+
+            // pagar pengaman lantai atas di atas balok tepi, hanya di sisi tanpa dinding
+            float gl = half - WellBand + 0.08f, gb = WellBand - 0.08f, wallStop = half - WallFace - 0.07f;
+            Vector3 o1 = start + Vector3.up * rise;                     // tepi belakang lubang, di lantai atas
+            if (!wallBack)
+                Railing(st, o1 + d * gb - side * (wallU[0] ? wallStop : gl), o1 + d * gb + side * (wallU[1] ? wallStop : gl), true, true);
+            for (int k = 0; k < 2; k++)
+            {
+                if (wallU[k]) continue;
+                float sd = k == 0 ? -1f : 1f;
+                Railing(st, o1 + side * (gl * sd) + d * (wallBack ? WallFace + 0.07f : gb), o1 + side * (gl * sd) + d * (run - 0.07f), wallBack, true);
+            }
+
+            // collider: permukaan ramp halus untuk CharacterController
+            Vector3 ra = cs, rb = cs + d * run + Vector3.up * rise;
+            Vector3 dir = (rb - ra).normalized;
             Vector3 up = Vector3.Cross(dir, side).normalized;
             if (up.y < 0) up = -up;
             GameObject ramp = new GameObject("RampCollider");
-            ramp.transform.SetParent(sg.transform, false);
-            ramp.transform.position = (a + b) * 0.5f - up * 0.15f + up * 0.02f;
+            ramp.transform.SetParent(st, false);
+            ramp.transform.position = (ra + rb) * 0.5f - up * 0.13f;
             ramp.transform.rotation = Quaternion.LookRotation(dir, up);
             BoxCollider rc = ramp.AddComponent<BoxCollider>();
-            rc.size = new Vector3(width, 0.3f, (b - a).magnitude + 0.2f);
-            // pagar samping: tiang + pegangan miring + dinding penghalang (collider)
-            for (int sd = -1; sd <= 1; sd += 2)
+            rc.size = new Vector3(width, 0.3f, (rb - ra).magnitude + 0.2f);
+            // penghalang samping (tak terlihat) dari lantai sampai 1 m di atas lantai atas
+            for (int k = 0; k < 2; k++)
             {
-                Vector3 o = side * (width * 0.5f + 0.06f) * sd;
-                // papan sisi (stringer) menutup samping tangga
-                for (int i = 0; i < N; i++)
-                {
-                    float hgt = step * (i + 1);
-                    Kit.Box(sg.transform, "Stringer", start + o + d * (tread * (i + 0.5f)) + Vector3.up * (hgt * 0.5f), new Vector3(0.1f, hgt, tread + 0.01f), riserM, false, rot);
-                }
-                // pegangan tangga
-                Vector3 r0 = a + o + Vector3.up * 0.95f, r1 = b + o + Vector3.up * 0.95f;
-                Kit.Box(sg.transform, "Handrail", (r0 + r1) * 0.5f, new Vector3(0.08f, 0.08f, (r1 - r0).magnitude), treadM, false, Quaternion.LookRotation(r1 - r0));
-                for (int i = 0; i <= 6; i++)
-                {
-                    float t = i / 6f;
-                    Vector3 basePt = Vector3.Lerp(a, b, t) + o;
-                    Kit.Box(sg.transform, "Baluster", basePt + Vector3.up * 0.47f, new Vector3(0.05f, 0.95f, 0.05f), treadM, false);
-                }
-                // penghalang samping (tidak terlihat) dari lantai sampai atas pegangan
+                float sd = k == 0 ? -1f : 1f;
+                float lat = wallF[k] ? half - WallFace - 0.03f : e[k] + 0.03f;
                 GameObject blk = new GameObject("StairSideBlock");
-                blk.transform.SetParent(sg.transform, false);
-                blk.transform.position = start + o + d * (run * 0.5f) + Vector3.up * ((rise + 1f) * 0.5f);
+                blk.transform.SetParent(st, false);
+                blk.transform.position = start + side * (lat * sd) + d * (run * 0.5f) + Vector3.up * ((rise + 1f) * 0.5f);
                 blk.transform.rotation = rot;
                 BoxCollider bc = blk.AddComponent<BoxCollider>();
                 bc.size = new Vector3(0.12f, rise + 1f, run);
             }
-            // penghalang ujung atas di lantai bawah (bagian bawah pendaratan)
+            // ujung atas di lantai bawah: penghalang + panel penutup (panel hanya bila tidak ada dinding di sana)
+            float outL = wallF[0] ? half - WallFace : e[0] + 0.06f, outR = wallF[1] ? half - WallFace : e[1] + 0.06f;
+            Vector3 endC = start + side * ((outR - outL) * 0.5f) + d * run;
             GameObject end = new GameObject("StairEndBlock");
-            end.transform.SetParent(sg.transform, false);
-            end.transform.position = start + d * (run + 0.06f) + Vector3.up * ((rise - 0.15f) * 0.5f);
+            end.transform.SetParent(st, false);
+            end.transform.position = endC + d * 0.06f + Vector3.up * ((rise - 0.15f) * 0.5f);
             end.transform.rotation = rot;
             BoxCollider ec = end.AddComponent<BoxCollider>();
-            ec.size = new Vector3(width + 0.3f, rise - 0.15f, 0.12f);
-            Kit.Box(sg.transform, "StairEndPanel", end.transform.position, new Vector3(width + 0.3f, rise - 0.15f, 0.1f), riserM, false, rot);
-
-            // pagar pengaman di sekitar lubang lantai atas
-            int fu = s.f + 1;
-            Vector2Int hole = s.Ramp1;
-            for (int k = 0; k < 4; k++)
-            {
-                if (k == s.dir) continue;                         // sisi pendaratan terbuka
-                Vector2Int n = hole + G.Dirs[k];
-                if (!L.In(fu, n) || L.Wall(fu, hole, k)) continue;   // sudah ada dinding
-                Vector3 mid = G.W(fu, hole) + G.D3(k) * (G.T * 0.5f - 0.08f);
-                Vector3 along = new Vector3(G.D3(k).z, 0f, -G.D3(k).x);
-                Railing(sg.transform, mid, along, G.T - 0.2f);
-            }
+            ec.size = new Vector3(outL + outR, rise - 0.15f, 0.12f);
+            if (!L.Wall(s.f, s.Ramp1, s.dir))
+                Kit.Box(st, "StairEndPanel", endC + d * 0.03f + Vector3.up * ((G.WallH + 0.04f) * 0.5f), new Vector3(outL + outR, G.WallH + 0.04f, 0.06f), dark, false, rot);
         }
 
-        static void Railing(Transform parent, Vector3 mid, Vector3 along, float len)
+        /// <summary>Pagar lurus p0 -> p1 (di ketinggian lantai). newel0/newel1 = buat tiang di ujung (false bila tiang sudut milik pagar lain).</summary>
+        static void Railing(Transform parent, Vector3 p0, Vector3 p1, bool newel0, bool newel1)
         {
+            Vector3 along = p1 - p0; float len = along.magnitude;
+            if (len < 0.2f) return;
+            along /= len;
             Quaternion rot = Quaternion.LookRotation(along);
+            Vector3 mid = (p0 + p1) * 0.5f;
             Material m = Look.DarkWood;
-            Kit.Box(parent, "RailTop", mid + Vector3.up * 1.0f, new Vector3(0.09f, 0.08f, len), m, false, rot);
-            Kit.Box(parent, "RailBottom", mid + Vector3.up * 0.08f, new Vector3(0.09f, 0.08f, len), m, false, rot);
-            int n = Mathf.RoundToInt(len / 0.3f);
+            Kit.Box(parent, "RailTop", mid + Vector3.up * 1.0f, new Vector3(0.09f, 0.07f, len), m, false, rot);
+            Kit.Box(parent, "RailBottom", mid + Vector3.up * 0.07f, new Vector3(0.07f, 0.06f, len), m, false, rot);
+            int n = Mathf.Max(1, Mathf.RoundToInt(len / 0.15f));
             for (int i = 0; i <= n; i++)
             {
-                Vector3 p = mid + along * (-len * 0.5f + len * i / n);
-                bool newel = i == 0 || i == n;
-                Kit.Box(parent, newel ? "Newel" : "Baluster", p + Vector3.up * 0.52f, newel ? new Vector3(0.14f, 1.1f, 0.14f) : new Vector3(0.05f, 0.92f, 0.05f), m, false);
+                bool endPost = i == 0 || i == n;
+                if (endPost && !(i == 0 ? newel0 : newel1)) continue;
+                Vector3 p = p0 + along * (len * i / n);
+                if (endPost)
+                {
+                    Kit.Box(parent, "Newel", p + Vector3.up * 0.55f, new Vector3(0.13f, 1.1f, 0.13f), m, false);
+                    Kit.Box(parent, "NewelCap", p + Vector3.up * 1.125f, new Vector3(0.17f, 0.05f, 0.17f), m, false);
+                }
+                else Kit.Box(parent, "Baluster", p + Vector3.up * 0.535f, new Vector3(0.04f, 0.87f, 0.04f), m, false);
             }
             GameObject blk = new GameObject("RailBlock");
             blk.transform.SetParent(parent, false);

@@ -433,9 +433,11 @@ namespace HantuBelajar
             string rugKey = r.type == RoomType.KamarTidur || r.type == RoomType.KamarAnak ? "rug_bed" : r.type == RoomType.RuangMakan ? "rug_dining" :
                             r.type == RoomType.Dapur ? "rug_kitchen" : r.type == RoomType.KamarMandi ? "rug_bath" : "rug_corr";
             GameObject rug = AssetLibrary.Model(rugKey);
-            if (rug != null && r.Area >= 4)
+            RectInt free0 = FreeRect(L, r);       // area ruangan tanpa sel tangga / lubang tangga
+            if (rug != null && r.Area >= 4 && free0.width * free0.height >= 2)
             {
-                float maxX = r.rect.width * G.T - 1.6f, maxZ = r.rect.height * G.T - 1.6f;
+                Vector3 rugC = new Vector3((free0.x + free0.width * 0.5f) * G.T, baseY, (free0.y + free0.height * 0.5f) * G.T);
+                float maxX = free0.width * G.T - 1.6f, maxZ = free0.height * G.T - 1.6f;
                 Bounds rb = Kit.ScaledBounds(rug, 1f, 0f);
                 bool rot = (rb.size.x > rb.size.z) != (maxX > maxZ);
                 float yawR = rot ? 90f : 0f;
@@ -444,7 +446,7 @@ namespace HantuBelajar
                 if (s > 0.3f)
                 {
                     Bounds sb = Kit.ScaledBounds(rug, s, yawR);
-                    Kit.Spawn(rug, root, center + new Vector3(-sb.center.x, 0.005f - sb.min.y, -sb.center.z), yawR, s, null, false, true, "Rug");
+                    Kit.Spawn(rug, root, rugC + new Vector3(-sb.center.x, 0.005f - sb.min.y, -sb.center.z), yawR, s, null, false, true, "Rug");
                 }
             }
 
@@ -455,6 +457,15 @@ namespace HantuBelajar
                 int count = Mathf.Max(r.rect.width, r.rect.height);
                 for (int i = 0; i < count; i++)
                 {
+                    // balok yang akan melintasi lubang tangga (tanpa plafon) tidak dipasang
+                    bool overWell = false;
+                    int span = alongX ? r.rect.width : r.rect.height;
+                    for (int j = 0; j < span; j++)
+                    {
+                        Vector2Int c = alongX ? new Vector2Int(r.rect.x + j, r.rect.y + i) : new Vector2Int(r.rect.x + i, r.rect.y + j);
+                        if (r.floor + 1 < L.floors && L.hole[r.floor + 1, c.x, c.y]) overWell = true;
+                    }
+                    if (overWell) continue;
                     float off = (i + 0.5f - count * 0.5f) * G.T;
                     Vector3 bp = center + Vector3.up * (G.WallH - 0.13f) + (alongX ? new Vector3(0f, 0f, off) : new Vector3(off, 0f, 0f));
                     Vector3 size = alongX ? new Vector3(r.rect.width * G.T, 0.26f, 0.22f) : new Vector3(0.22f, 0.26f, r.rect.height * G.T);
@@ -466,13 +477,22 @@ namespace HantuBelajar
             {
                 float sx = rng.NextDouble() < 0.5 ? -1f : 1f, sz = rng.NextDouble() < 0.5 ? -1f : 1f;
                 Vector3 corner = center + new Vector3(sx * (r.rect.width * G.T * 0.5f - 0.32f), G.WallH - 0.32f, sz * (r.rect.height * G.T * 0.5f - 0.32f));
+                int spin = rng.Next(360); float webScale = 0.7f + (float)rng.NextDouble() * 0.5f;
+                // sarang (lebar s/d 1,2 m) yang menjangkau sel anak tangga akan menembus tangga / melayang di lubang tangga
+                bool nearStair = false;
+                for (int q = 0; q < 4; q++)
+                {
+                    Stair ws = L.StairCell(r.floor, G.C(corner + new Vector3((q & 1) == 0 ? -0.65f : 0.65f, 0f, (q & 2) == 0 ? -0.65f : 0.65f)));
+                    if (ws != null && ws.f == r.floor) nearStair = true;
+                }
+                if (nearStair) continue;
                 GameObject web = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 Object.Destroy(web.GetComponent<Collider>());
                 web.name = "Cobweb";
                 web.transform.SetParent(root, false);
                 web.transform.position = corner;
-                web.transform.rotation = Quaternion.LookRotation(new Vector3(-sx, 0.9f, -sz).normalized) * Quaternion.Euler(0f, 0f, rng.Next(360));
-                web.transform.localScale = Vector3.one * (0.7f + (float)rng.NextDouble() * 0.5f);
+                web.transform.rotation = Quaternion.LookRotation(new Vector3(-sx, 0.9f, -sz).normalized) * Quaternion.Euler(0f, 0f, spin);
+                web.transform.localScale = Vector3.one * webScale;
                 Renderer wr = web.GetComponent<Renderer>();
                 wr.sharedMaterial = Look.Cobweb;
                 wr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -541,6 +561,27 @@ namespace HantuBelajar
                     break;
                 }
             }
+        }
+
+        /// <summary>Persegi panjang terbesar di dalam ruangan yang tidak memuat sel tangga / lubang tangga (dipakai untuk karpet).</summary>
+        static RectInt FreeRect(HouseLayout L, Room r)
+        {
+            RectInt best = new RectInt(r.rect.x, r.rect.y, 0, 0);
+            int bestA = 0, bestMin = 0;
+            for (int x0 = r.rect.x; x0 < r.rect.xMax; x0++)
+                for (int y0 = r.rect.y; y0 < r.rect.yMax; y0++)
+                    for (int x1 = x0 + 1; x1 <= r.rect.xMax; x1++)
+                        for (int y1 = y0 + 1; y1 <= r.rect.yMax; y1++)
+                        {
+                            bool ok = true;
+                            for (int x = x0; x < x1 && ok; x++)
+                                for (int y = y0; y < y1 && ok; y++)
+                                    if (L.StairCell(r.floor, new Vector2Int(x, y)) != null) ok = false;
+                            if (!ok) continue;
+                            int a = (x1 - x0) * (y1 - y0), mn = Mathf.Min(x1 - x0, y1 - y0);
+                            if (a > bestA || (a == bestA && mn > bestMin)) { bestA = a; bestMin = mn; best = new RectInt(x0, y0, x1 - x0, y1 - y0); }
+                        }
+            return best;
         }
 
         static Lamp Sconce(Transform root, WallSlot s, bool shadows)
